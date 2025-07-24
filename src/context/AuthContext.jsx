@@ -4,9 +4,11 @@ import {
   onAuthStateChanged,
   signOut,
   deleteUser,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
 
 const AuthContext = createContext();
@@ -20,23 +22,45 @@ export const AuthProvider = ({ children }) => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUsuario(user);
-        const docSnap = await getDoc(doc(db, "usuarios", user.uid));
-        setRol(docSnap.exists() ? docSnap.data().rol || "user" : "user");
+        const ref = doc(db, "usuarios", user.uid);
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          setRol(snap.data().rol || "user");
+        } else {
+          // Si no existe el documento, lo creamos
+          await setDoc(ref, {
+            nombre: user.displayName || "",
+            telefono: "",
+            email: user.email.toLowerCase(),
+            fechaNacimiento: "",
+            rol: "user",
+            creado: new Date().toISOString(),
+          });
+          setRol("user");
+        }
       } else {
         setUsuario(null);
         setRol(null);
       }
       setCargando(false);
     });
+
     return () => unsub();
   }, []);
 
-  // ✅ Login
+  // Login tradicional
   const login = async (email, password) => {
     return await signInWithEmailAndPassword(auth, email, password);
   };
 
-  // ✅ Logout
+  // Login con Google
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  };
+
+  // Logout
   const logout = async () => {
     try {
       await signOut(auth);
@@ -47,7 +71,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Delete user
+  // Eliminar cuenta
   const deleteUserAccount = async () => {
     try {
       const user = auth.currentUser;
@@ -64,7 +88,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ usuario, rol, cargando, login, logout, deleteUserAccount }}
+      value={{ usuario, rol, cargando, login, loginWithGoogle, logout, deleteUserAccount }}
     >
       {children}
     </AuthContext.Provider>

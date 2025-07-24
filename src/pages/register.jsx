@@ -1,51 +1,50 @@
 // src/pages/register.jsx
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { setDoc, doc } from 'firebase/firestore';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { setDoc, doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/firebase';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
 
+// Assets
 import logo from '../assets/galeria/logo.png';
 import fondo from '../assets/galeria/fondo-barberia.jpg';
 
 const Register = () => {
-  const [nombre, setNombre] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [mensaje, setMensaje] = useState(null);
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // 🔐 Registro / Login con Google
+  const handleGoogleSignIn = async () => {
     setMensaje(null);
     setLoading(true);
-
-    const emailLower = email.toLowerCase();
+    const provider = new GoogleAuthProvider();
 
     try {
-      const cred = await createUserWithEmailAndPassword(auth, emailLower, password);
-      const user = cred.user;
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
 
-      await setDoc(doc(db, 'usuarios', user.uid), {
-        nombre,
-        telefono,
-        email: emailLower,
-        fechaNacimiento,
-        rol: 'user',
-        creado: new Date().toISOString(),
-      });
+      const refUsuario = doc(db, 'usuarios', user.uid);
+      const docSnap = await getDoc(refUsuario);
 
-      setMensaje('✅ Usuario registrado correctamente.');
-      setTimeout(() => navigate('/perfil'), 1500);
+      if (!docSnap.exists()) {
+        await setDoc(refUsuario, {
+          nombre: user.displayName || '',
+          telefono: '',
+          email: user.email.toLowerCase(),
+          fechaNacimiento: '',
+          rol: 'user',
+          creado: new Date().toISOString(),
+        });
+      }
+
+      setMensaje('✅ Bienvenido con Google.');
+      setTimeout(() => navigate('/perfil'), 1000);
     } catch (error) {
-      console.error(error);
-      setMensaje('❌ Error: ' + error.message);
+      console.error('❌ Google Auth Error:', error);
+      setMensaje('❌ Error al iniciar sesión con Google.');
     } finally {
       setLoading(false);
     }
@@ -59,11 +58,9 @@ const Register = () => {
       <Helmet>
         <title>Registro | BarberYass</title>
         <meta name="description" content="Crea tu cuenta para reservar servicios en la barbería BarberYass." />
-        <meta name="keywords" content="registro, crear cuenta, barbería, BarberYass" />
-        <meta name="author" content="BarberYass" />
       </Helmet>
 
-      <div className="absolute inset-0 bg-black bg-opacity-50 z-0"></div>
+      <div className="absolute inset-0 bg-black bg-opacity-60 z-0" />
 
       <motion.div
         className="relative z-10 w-full max-w-sm bg-white bg-opacity-95 p-6 rounded-xl shadow-md text-center"
@@ -80,70 +77,25 @@ const Register = () => {
           transition={{ delay: 0.2 }}
         />
 
-        <h2 className="text-xl font-bold mb-4 text-gray-800">Crear cuenta</h2>
+        <h2 className="text-xl font-bold mb-4 text-gray-800">Regístrate con Google</h2>
 
         {mensaje && (
           <div
             className={`text-sm mb-4 p-3 rounded ${
-              mensaje.startsWith('✅')
-                ? 'bg-green-100 text-green-700'
-                : 'bg-red-100 text-red-700'
+              mensaje.startsWith('✅') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
             }`}
           >
             {mensaje}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-left">
-          <input
-            type="text"
-            placeholder="Nombre completo"
-            className="w-full p-2 border rounded"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            required
-          />
-          <input
-            type="tel"
-            placeholder="Teléfono"
-            className="w-full p-2 border rounded"
-            value={telefono}
-            onChange={(e) => setTelefono(e.target.value)}
-            required
-          />
-          <input
-            type="date"
-            className="w-full p-2 border rounded"
-            value={fechaNacimiento}
-            onChange={(e) => setFechaNacimiento(e.target.value)}
-            required
-          />
-          <input
-            type="email"
-            placeholder="Correo electrónico"
-            className="w-full p-2 border rounded"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Contraseña"
-            className="w-full p-2 border rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-2 rounded transition ${
-              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-gray-800 text-white'
-            }`}
-          >
-            {loading ? 'Registrando...' : 'Registrarme'}
-          </button>
-        </form>
+        <button
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+          className="w-full py-2 bg-white border border-gray-400 rounded text-gray-800 hover:bg-gray-100"
+        >
+          {loading ? 'Conectando...' : 'Continuar con Google'}
+        </button>
       </motion.div>
     </div>
   );
