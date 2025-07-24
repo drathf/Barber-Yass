@@ -6,7 +6,7 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
-    "public": "barberyass",
+    "public": "dist",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -18,8 +18,5 @@
         "destination": "/index.html"
       }
     ]
-  },
-  "storage": {
-    "rules": "storage.rules"
   }
 }
