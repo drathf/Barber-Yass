@@ -1,19 +1,34 @@
+// Código optimizado como lo tienes estructurado, pero con mejoras estéticas y los nuevos botones incluidos.
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
-  doc, getDoc, updateDoc, collection, query, where, onSnapshot
+  doc, getDoc, updateDoc, collection, query, where, onSnapshot, deleteDoc
 } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
-import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import {
+  getAuth,
+  sendPasswordResetEmail,
+  deleteUser as firebaseDeleteUser,
+} from 'firebase/auth';
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from 'firebase/storage';
+
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import logo from '../assets/galeria/logo.png';
 
 const Perfil = () => {
-  const { usuario } = useAuth();
+  const { usuario, logout } = useAuth();
   const auth = getAuth();
+  const navigate = useNavigate();
+
   const [rol, setRol] = useState(null);
   const [loading, setLoading] = useState(true);
   const [perfil, setPerfil] = useState({
@@ -73,10 +88,10 @@ const Perfil = () => {
 
       if (archivoFoto) {
         const storage = getStorage();
-        const storageRef = ref(storage, `fotosPerfil/${usuario.uid}`);
-        await uploadBytes(storageRef, archivoFoto);
-        const downloadURL = await getDownloadURL(storageRef);
-        updatedPerfil.foto = downloadURL;
+        const ref = storageRef(storage, `fotosPerfil/${usuario.uid}`);
+        await uploadBytes(ref, archivoFoto);
+        const url = await getDownloadURL(ref);
+        updatedPerfil.foto = url;
       }
 
       const dataUpdate = {
@@ -111,6 +126,34 @@ const Perfil = () => {
     }
   };
 
+  const cerrarSesion = async () => {
+    await logout();
+    navigate('/');
+  };
+
+  const eliminarCuenta = async () => {
+    const confirm = window.confirm('⚠️ Esta acción eliminará tu cuenta y datos. ¿Estás seguro?');
+    if (!confirm) return;
+
+    try {
+      const ref = doc(db, 'usuarios', usuario.uid);
+      await deleteDoc(ref);
+
+      const storage = getStorage();
+      const fotoRef = storageRef(storage, `fotosPerfil/${usuario.uid}`);
+      await deleteObject(fotoRef).catch(() => {}); // por si no hay foto
+
+      const userAuth = auth.currentUser;
+      await firebaseDeleteUser(userAuth);
+
+      setMensaje('✅ Cuenta eliminada.');
+      navigate('/');
+    } catch (error) {
+      console.error(error);
+      setMensaje('❌ Error al eliminar la cuenta.');
+    }
+  };
+
   if (!usuario || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500">
@@ -126,11 +169,10 @@ const Perfil = () => {
         <meta name="description" content="Gestiona tu perfil, actualiza tus datos y revisa tus reservas activas con BarberYass." />
       </Helmet>
 
-      <motion.img src={logo} alt="Logo" className="w-20 mx-auto mb-6"
+      <motion.img src={logo} alt="Logo" className="w-20 mx-auto mb-4"
         initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
       />
-
-      <h2 className="text-2xl font-bold text-center mb-4 text-purple-900">👤 Mi Perfil</h2>
+      <h2 className="text-2xl font-bold text-center mb-4 text-purple-900">Hola, {perfil.nombre}</h2>
       {mensaje && <p className="text-center text-blue-600 mb-4">{mensaje}</p>}
 
       <div className="bg-white p-6 rounded-xl shadow space-y-4">
@@ -167,7 +209,6 @@ const Perfil = () => {
         <input
           type="date"
           disabled={nacimientoGuardado}
-          placeholder="Fecha de nacimiento"
           value={perfil.nacimiento}
           onChange={(e) => setPerfil({ ...perfil, nacimiento: e.target.value })}
           className="w-full border border-gray-300 p-2 rounded"
@@ -185,18 +226,20 @@ const Perfil = () => {
           rows={3}
         />
 
-        <button
-          onClick={guardarCambios}
-          className="w-full bg-black text-white py-2 rounded hover:bg-gray-800 transition"
-        >
+        <button onClick={guardarCambios} className="w-full bg-black text-white py-2 rounded hover:bg-gray-800 transition">
           Guardar cambios
         </button>
 
-        <button
-          onClick={cambiarContrasena}
-          className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition mt-2"
-        >
+        <button onClick={cambiarContrasena} className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition">
           Cambiar contraseña
+        </button>
+
+        <button onClick={cerrarSesion} className="w-full bg-gray-300 text-black py-2 rounded hover:bg-gray-400 transition mt-2">
+          Cerrar sesión
+        </button>
+
+        <button onClick={eliminarCuenta} className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition mt-2">
+          Eliminar cuenta
         </button>
       </div>
 

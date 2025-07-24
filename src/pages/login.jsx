@@ -7,7 +7,6 @@ import { Helmet } from 'react-helmet';
 import logo from '../assets/galeria/logo.png';
 import fondo from '../assets/galeria/fondo-barberia.jpg';
 
-// Galería de cortes
 import corte1 from '../assets/galeria/cortesyservicios1.jpeg';
 import corte2 from '../assets/galeria/cortesyservicios2.jpeg';
 import corte3 from '../assets/galeria/cortesyservicios3.jpeg';
@@ -18,14 +17,23 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
+
+    if (!email.includes('@') || password.length < 6) {
+      return setError('❌ Ingresa un correo válido y una contraseña de al menos 6 caracteres.');
+    }
+
     try {
-      await login(email, password);
+      setLoading(true);
+      const userCredential = await login(email, password);
+      console.log('Usuario logueado:', userCredential.user); // solo en desarrollo
       navigate('/perfil');
     } catch (err) {
       console.error('Login error:', err.code, err.message);
@@ -36,6 +44,8 @@ const Login = () => {
       } else {
         setError('❌ Error al iniciar sesión. Intenta nuevamente.');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,10 +63,8 @@ const Login = () => {
         <meta name="author" content="BarberYass" />
       </Helmet>
 
-      {/* Overlay oscuro */}
       <div className="absolute inset-0 bg-black bg-opacity-60 z-0" />
 
-      {/* Botón Atrás */}
       <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
         <button
           onClick={() => navigate(-1)}
@@ -67,7 +75,6 @@ const Login = () => {
         </button>
       </div>
 
-      {/* Card de login */}
       <motion.div
         className="relative z-10 w-full max-w-sm bg-white bg-opacity-95 p-6 rounded-xl shadow-md text-center"
         initial={{ opacity: 0, scale: 0.95 }}
@@ -112,13 +119,15 @@ const Login = () => {
           />
           <button
             type="submit"
-            className="w-full bg-black text-white py-2 rounded hover:bg-gray-800 transition"
+            disabled={loading}
+            className={`w-full py-2 rounded transition ${
+              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-gray-800 text-white'
+            }`}
           >
-            Ingresar
+            {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
 
-        {/* Opción de recuperación */}
         <p className="mt-4 text-sm text-gray-500">
           ¿Olvidaste tu contraseña?{' '}
           <Link to="/recuperar" className="text-blue-600 underline">
@@ -127,9 +136,8 @@ const Login = () => {
         </p>
       </motion.div>
 
-      {/* Galería visual */}
       <div className="relative z-10 mt-8 w-full max-w-3xl px-4">
-        {/* Desktop */}
+        {/* Desktop gallery */}
         <div className="hidden md:grid grid-cols-5 gap-3">
           {galeria.map((img, i) => (
             <img
@@ -142,7 +150,7 @@ const Login = () => {
           ))}
         </div>
 
-        {/* Mobile */}
+        {/* Mobile gallery */}
         <div className="md:hidden flex gap-3 overflow-x-auto scrollbar-hide">
           {galeria.map((img, i) => (
             <img
