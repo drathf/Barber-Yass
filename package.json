@@ -1,0 +1,36 @@
+{
+  "name": "barberyass",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
+    "firebase": "^10.12.0",
+    "framer-motion": "^11.0.3",
+    "googleapis": "^153.0.0",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
+    "react": "^18.2.0",
+    "react-datepicker": "^8.4.0",
+    "react-dom": "^18.2.0",
+    "react-helmet": "^6.1.0",
+    "react-router-dom": "^6.23.0",
+    "uuid": "^9.0.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "vite": "^5.2.8"
+  }
+}
