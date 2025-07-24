@@ -8,7 +8,7 @@ import { db } from '../firebase/firebase';
 import { useAuth } from '../context/AuthContext'; // ✅ Importado correctamente
 
 import qrYape from '../assets/galeria/yape-qr.png';
-import logo from '../assets/logo.png';
+import logo from '../assets/galeria/logo.png';
 
 const Reservar = () => {
   const { usuario } = useAuth();
