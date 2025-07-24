@@ -1,98 +1,90 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useContext, useEffect, useState } from "react";
-import {
-  onAuthStateChanged,
-  signOut,
-  deleteUser,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider
-} from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, db } from "../firebase/firebase";
+  import { createContext, useContext, useEffect, useState } from "react";
+  import {
+    GoogleAuthProvider,
+    signInWithPopup,
+    signOut,
+    onAuthStateChanged,
+  } from "firebase/auth";
+  import {
+    doc,
+    getDoc,
+    setDoc,
+  } from "firebase/firestore";
+  import { auth, db } from "../firebase/firebase";
 
-const AuthContext = createContext();
+  // Crear contexto
+  const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
-  const [usuario, setUsuario] = useState(null);
-  const [rol, setRol] = useState(null);
-  const [cargando, setCargando] = useState(true);
+  // Hook personalizado
+  export const useAuth = () => useContext(AuthContext);
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUsuario(user);
-        const ref = doc(db, "usuarios", user.uid);
-        const snap = await getDoc(ref);
+  // Proveedor de contexto
+  export const AuthProvider = ({ children }) => {
+    const [usuario, setUsuario] = useState(null);
+    const [rol, setRol] = useState(null);
+    const [cargando, setCargando] = useState(true);
 
-        if (snap.exists()) {
-          setRol(snap.data().rol || "user");
+    // ✅ Login con Google
+    const loginWithGoogle = async () => {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      const ref = doc(db, "usuarios", user.uid);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        await setDoc(ref, {
+          nombre: user.displayName || '',
+          telefono: '',
+          email: user.email.toLowerCase(),
+          fechaNacimiento: '',
+          rol: 'user',
+          creado: new Date().toISOString(),
+        });
+      }
+
+      return result;
+    };
+
+    // 🚪 Logout
+    const logout = () => signOut(auth);
+
+    // 🔁 Observar el estado del auth
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          setUsuario(user);
+          try {
+            const ref = doc(db, "usuarios", user.uid);
+            const snap = await getDoc(ref);
+            setRol(snap.exists() ? snap.data().rol : 'user');
+          } catch (error) {
+            console.error("Error al obtener datos del usuario:", error);
+            setRol(null);
+          }
         } else {
-          // Si no existe el documento, lo creamos
-          await setDoc(ref, {
-            nombre: user.displayName || "",
-            telefono: "",
-            email: user.email.toLowerCase(),
-            fechaNacimiento: "",
-            rol: "user",
-            creado: new Date().toISOString(),
-          });
-          setRol("user");
+          setUsuario(null);
+          setRol(null);
         }
-      } else {
-        setUsuario(null);
-        setRol(null);
-      }
-      setCargando(false);
-    });
 
-    return () => unsub();
-  }, []);
+        setCargando(false);
+      });
 
-  // Login tradicional
-  const login = async (email, password) => {
-    return await signInWithEmailAndPassword(auth, email, password);
+      return () => unsubscribe();
+    }, []);
+
+    return (
+      <AuthContext.Provider
+        value={{
+          usuario,
+          rol,
+          cargando,
+          loginWithGoogle,
+          logout,
+        }}
+      >
+        {!cargando && children}
+      </AuthContext.Provider>
+    );
   };
-
-  // Login con Google
-  const loginWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
-  };
-
-  // Logout
-  const logout = async () => {
-    try {
-      await signOut(auth);
-      setUsuario(null);
-      setRol(null);
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-    }
-  };
-
-  // Eliminar cuenta
-  const deleteUserAccount = async () => {
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        await deleteUser(user);
-        setUsuario(null);
-        setRol(null);
-      }
-    } catch (error) {
-      console.error("Error al eliminar usuario:", error);
-      throw error;
-    }
-  };
-
-  return (
-    <AuthContext.Provider
-      value={{ usuario, rol, cargando, login, loginWithGoogle, logout, deleteUserAccount }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => useContext(AuthContext);

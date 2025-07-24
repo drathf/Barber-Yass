@@ -2,34 +2,33 @@
 import React from "react";
 import { Routes, Route, Link } from "react-router-dom";
 
-// Layouts
+// 📦 Layouts
 import Layout from "./components/Layout";
 import AdminLayout from "./layouts/AdminLayout";
 
-// Protecciones
+// 🔐 Protecciones
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProtectedRouteByRol from "./components/ProtectedRouteByRol";
 
-// Páginas públicas
+// 🌐 Páginas públicas
 import Home from "./pages/Home";
-import Login from "./pages/login";
-import Register from "./pages/register";
+import Auth from "./pages/Auth"; // Unifica login y register
 import Galeria from "./pages/galeria";
 import RecuperarPassword from "./pages/RecuperarPassword";
 
-// Páginas privadas (usuarios autenticados)
+// 👤 Páginas privadas (usuarios autenticados)
 import Perfil from "./pages/perfil";
 import Reservar from "./pages/reservar";
 import Confirmacion from "./pages/confirmacion";
 
-// Panel administrativo
+// 🛠️ Panel administrativo
 import AdminPanel from "./pages/adminpanel";
 import AdminGestionUsuarios from "./components/AdminGestionUsuarios";
 import AdminHorarios from "./components/AdminHorarios";
 import AdminReservasManual from "./components/AdminReservaManual";
 import AdminServicios from "./components/AdminServicios";
 
-// Página 404
+// ❌ Página 404
 const NotFound = () => (
   <div className="min-h-screen flex flex-col justify-center items-center text-center p-10">
     <h1 className="text-5xl font-bold text-red-600 mb-2">404</h1>
@@ -45,8 +44,8 @@ function App() {
       <Route path="/recuperar" element={<RecuperarPassword />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Auth />} />
+        <Route path="/register" element={<Auth />} />
         <Route path="/galeria" element={<Galeria />} />
 
         {/* 🔐 Rutas privadas (usuarios autenticados) */}
@@ -76,7 +75,7 @@ function App() {
         />
       </Route>
 
-      {/* 🔐 Rutas administrativas por rol */}
+      {/* 🔐 Panel administrativo (según rol) */}
       <Route
         path="/admin"
         element={

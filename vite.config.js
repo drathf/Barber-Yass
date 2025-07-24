@@ -7,16 +7,17 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'dist',
-    sourcemap: true,        // Útil para debug en producción
-    minify: 'esbuild',      // Usa 'esbuild' por velocidad; puedes cambiar a 'terser' si necesitas compresión avanzada
+    sourcemap: false,          // ⛔ Desactiva en producción para mayor seguridad
+    minify: 'esbuild',
+    emptyOutDir: true,         // ✅ Limpia el directorio antes del build
   },
   server: {
     port: 5173,
-    open: true,             // Abre automáticamente en el navegador
+    open: true,
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'), // Importar desde '@/archivo'
+      '@': path.resolve(__dirname, 'src'),
     },
   },
 });
