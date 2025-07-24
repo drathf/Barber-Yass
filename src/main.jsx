@@ -3,18 +3,22 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-// ✅ Estilos globales (Tailwind)
+// ✅ Estilos globales (TailwindCSS)
 import './index.css';
 
-// ✅ Enrutamiento y contexto de autenticación global
+// ✅ Contexto y enrutamiento
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 
-// ✅ Punto de montaje
-const root = document.getElementById('root');
+// ✅ Punto de entrada y renderizado principal
+const rootElement = document.getElementById('root');
 
-if (root) {
-  ReactDOM.createRoot(root).render(
+if (!rootElement) {
+  console.error('❌ No se encontró el elemento con id="root". Revisa tu index.html');
+} else {
+  const root = ReactDOM.createRoot(rootElement);
+
+  root.render(
     <React.StrictMode>
       <BrowserRouter>
         <AuthProvider>
@@ -23,6 +27,4 @@ if (root) {
       </BrowserRouter>
     </React.StrictMode>
   );
-} else {
-  console.error('❌ No se encontró el elemento raíz con id="root". Verifica tu index.html');
 }
