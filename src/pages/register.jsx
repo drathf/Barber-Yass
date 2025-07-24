@@ -1,4 +1,4 @@
-// ✅ register.jsx corregido y validado con nombre, teléfono y fecha de nacimiento
+// src/pages/register.jsx
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { setDoc, doc } from 'firebase/firestore';
@@ -17,6 +17,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [mensaje, setMensaje] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
   const auth = getAuth();
@@ -24,20 +25,21 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje(null);
+    setLoading(true);
+
+    const emailLower = email.toLowerCase();
 
     try {
-      // Crea al usuario en Firebase Authentication
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const cred = await createUserWithEmailAndPassword(auth, emailLower, password);
       const user = cred.user;
 
-      // Guarda los datos adicionales en Firestore (colección 'usuarios')
-await setDoc(doc(db, 'usuarios', user.uid), {
-  nombre: nombre, // ✅ usar variable `nombre` y no `nombreCompleto`
-  telefono,
-  email: user.email,
-  fechaNacimiento,
-  rol: 'user',
-  creado: new Date().toISOString(),
+      await setDoc(doc(db, 'usuarios', user.uid), {
+        nombre,
+        telefono,
+        email: emailLower,
+        fechaNacimiento,
+        rol: 'user',
+        creado: new Date().toISOString(),
       });
 
       setMensaje('✅ Usuario registrado correctamente.');
@@ -45,6 +47,8 @@ await setDoc(doc(db, 'usuarios', user.uid), {
     } catch (error) {
       console.error(error);
       setMensaje('❌ Error: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -110,7 +114,6 @@ await setDoc(doc(db, 'usuarios', user.uid), {
           />
           <input
             type="date"
-            placeholder="Fecha de nacimiento"
             className="w-full p-2 border rounded"
             value={fechaNacimiento}
             onChange={(e) => setFechaNacimiento(e.target.value)}
@@ -134,9 +137,12 @@ await setDoc(doc(db, 'usuarios', user.uid), {
           />
           <button
             type="submit"
-            className="w-full bg-black text-white py-2 rounded hover:bg-gray-800 transition"
+            disabled={loading}
+            className={`w-full py-2 rounded transition ${
+              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-gray-800 text-white'
+            }`}
           >
-            Registrarme
+            {loading ? 'Registrando...' : 'Registrarme'}
           </button>
         </form>
       </motion.div>

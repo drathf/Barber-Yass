@@ -23,31 +23,32 @@ const Login = () => {
   const { login } = useAuth();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError(null);
+  e.preventDefault();
+  setError(null);
 
-    if (!email.includes('@') || password.length < 6) {
-      return setError('❌ Ingresa un correo válido y una contraseña de al menos 6 caracteres.');
-    }
+  if (!email.includes('@') || password.length < 6) {
+    return setError('❌ Ingresa un correo válido y una contraseña de al menos 6 caracteres.');
+  }
 
-    try {
-      setLoading(true);
-      const userCredential = await login(email, password);
-      console.log('Usuario logueado:', userCredential.user); // solo en desarrollo
-      navigate('/perfil');
-    } catch (err) {
-      console.error('Login error:', err.code, err.message);
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setError('❌ Credenciales incorrectas o usuario no registrado.');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('❌ Formato de correo inválido.');
-      } else {
-        setError('❌ Error al iniciar sesión. Intenta nuevamente.');
-      }
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+    const userCredential = await login(email.toLowerCase(), password); // ✅ corrección aquí
+    console.log('Usuario logueado:', userCredential.user);
+    navigate('/perfil');
+  } catch (err) {
+    console.error('Login error:', err.code, err.message);
+    if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+      setError('❌ Credenciales incorrectas o usuario no registrado.');
+    } else if (err.code === 'auth/invalid-email') {
+      setError('❌ Formato de correo inválido.');
+    } else {
+      setError('❌ Error al iniciar sesión. Intenta nuevamente.');
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const galeria = [corte1, corte2, corte3, corte4, corte5];
 
