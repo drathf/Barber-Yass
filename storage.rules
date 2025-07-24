@@ -1,12 +1,45 @@
 rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
 
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if false;
+    // 👤 Colección de usuarios
+    match /usuarios/{uid} {
+      allow read: if request.auth.uid == uid || esAdmin();
+      allow write: if request.auth.uid == uid;
+      allow update: if esAdmin();
+      allow delete: if esGod();
+    }
+
+    // 📅 Reservas
+    match /reservas/{reservaId} {
+      allow create: if esUsuario() || esAdmin();
+      allow read: if esAdmin() || (resource.data.email == request.auth.token.email);
+      allow update, delete: if esAdmin();
+    }
+
+    // ⏱️ Horarios
+    match /horarios/{horarioId} {
+      allow read: if true;
+      allow create, update, delete: if esAdmin();
+    }
+
+    // ✅ FUNCIONES DE ROL
+    function esUsuario() {
+      return request.auth != null &&
+        (request.auth.token.rol == "user" || request.auth.token.rol == "vip");
+    }
+
+    function esVip() {
+      return request.auth != null && request.auth.token.rol == "vip";
+    }
+
+    function esAdmin() {
+      return request.auth != null &&
+        (request.auth.token.rol == "admin" || request.auth.token.rol == "god" || request.auth.token.rol == "barberyass");
+    }
+
+    function esGod() {
+      return request.auth != null && request.auth.token.rol == "god";
     }
   }
 }

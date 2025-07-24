@@ -1,8 +1,8 @@
 // src/pages/register.jsx
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { setDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
+import { auth, db } from '../firebase/firebase';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
@@ -20,7 +20,6 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const auth = getAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
