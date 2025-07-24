@@ -1,4 +1,4 @@
-// ✅ register.jsx mejorado con fechaNacimiento y validación completa
+// ✅ register.jsx corregido y validado con nombre, teléfono y fecha de nacimiento
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { setDoc, doc } from 'firebase/firestore';
@@ -26,16 +26,18 @@ const Register = () => {
     setMensaje(null);
 
     try {
+      // Crea al usuario en Firebase Authentication
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const user = cred.user;
 
-      await setDoc(doc(db, 'usuarios', user.uid), {
-        nombre,
-        telefono,
-        email,
-        fechaNacimiento,
-        rol: 'user',
-        creado: new Date().toISOString(),
+      // Guarda los datos adicionales en Firestore (colección 'usuarios')
+await setDoc(doc(db, 'usuarios', user.uid), {
+  nombre: nombre, // ✅ usar variable `nombre` y no `nombreCompleto`
+  telefono,
+  email: user.email,
+  fechaNacimiento,
+  rol: 'user',
+  creado: new Date().toISOString(),
       });
 
       setMensaje('✅ Usuario registrado correctamente.');

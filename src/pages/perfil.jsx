@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
-  collection, getDocs, query, where, updateDoc, doc, onSnapshot
+  doc, getDoc, updateDoc, collection, query, where, onSnapshot
 } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
@@ -34,23 +34,23 @@ const Perfil = () => {
   useEffect(() => {
     if (!usuario) return;
 
-    const qUser = query(collection(db, 'usuarios'), where('email', '==', usuario.email));
-    const unsubUser = onSnapshot(qUser, (snap) => {
-      if (!snap.empty) {
-        const data = snap.docs[0].data();
+    const refUser = doc(db, 'usuarios', usuario.uid);
+    const unsubUser = onSnapshot(refUser, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
         setRol(data.rol || 'user');
         setNacimientoGuardado(!!data.nacimiento);
         setDniGuardado(!!data.dni);
-        setPerfil(prev => ({
-          ...prev,
+        setPerfil({
           nombre: data.nombre || '',
           dni: data.dni || '',
           nacimiento: data.nacimiento || '',
-          email: data.email,
+          email: data.email || usuario.email,
           telefono: data.telefono || '',
           comentario: data.comentario || '',
           foto: data.foto || ''
-        }));
+        });
+        setLoading(false);
       }
     });
 
@@ -60,7 +60,6 @@ const Perfil = () => {
       setReservas(lista);
     });
 
-    setLoading(false);
     return () => {
       unsubUser();
       unsubReservas();
@@ -69,36 +68,33 @@ const Perfil = () => {
 
   const guardarCambios = async () => {
     try {
-      const q = query(collection(db, 'usuarios'), where('email', '==', usuario.email));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const refDoc = doc(db, 'usuarios', snap.docs[0].id);
+      const refDoc = doc(db, 'usuarios', usuario.uid);
+      const updatedPerfil = { ...perfil };
 
-        if (archivoFoto) {
-          const storage = getStorage();
-          const storageRef = ref(storage, `fotosPerfil/${usuario.uid}`);
-          await uploadBytes(storageRef, archivoFoto);
-          const downloadURL = await getDownloadURL(storageRef);
-          perfil.foto = downloadURL;
-        }
-
-        const dataUpdate = {
-          telefono: perfil.telefono,
-          comentario: perfil.comentario,
-          foto: perfil.foto
-        };
-
-        if (!nacimientoGuardado && perfil.nacimiento) {
-          dataUpdate.nacimiento = perfil.nacimiento;
-        }
-
-        if (!dniGuardado && perfil.dni) {
-          dataUpdate.dni = perfil.dni;
-        }
-
-        await updateDoc(refDoc, dataUpdate);
-        setMensaje('✅ Cambios guardados correctamente');
+      if (archivoFoto) {
+        const storage = getStorage();
+        const storageRef = ref(storage, `fotosPerfil/${usuario.uid}`);
+        await uploadBytes(storageRef, archivoFoto);
+        const downloadURL = await getDownloadURL(storageRef);
+        updatedPerfil.foto = downloadURL;
       }
+
+      const dataUpdate = {
+        telefono: updatedPerfil.telefono,
+        comentario: updatedPerfil.comentario,
+        foto: updatedPerfil.foto || ''
+      };
+
+      if (!nacimientoGuardado && updatedPerfil.nacimiento) {
+        dataUpdate.nacimiento = updatedPerfil.nacimiento;
+      }
+
+      if (!dniGuardado && updatedPerfil.dni) {
+        dataUpdate.dni = updatedPerfil.dni;
+      }
+
+      await updateDoc(refDoc, dataUpdate);
+      setMensaje('✅ Cambios guardados correctamente');
     } catch (error) {
       console.error(error);
       setMensaje('❌ Error al guardar cambios');
@@ -176,6 +172,7 @@ const Perfil = () => {
           onChange={(e) => setPerfil({ ...perfil, nacimiento: e.target.value })}
           className="w-full border border-gray-300 p-2 rounded"
         />
+
         {(nacimientoGuardado || dniGuardado) && (
           <p className="text-xs text-gray-400 italic">* Los campos deshabilitados no pueden modificarse una vez guardados.</p>
         )}

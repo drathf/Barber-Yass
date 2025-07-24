@@ -23,14 +23,19 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError(null);
     try {
       await login(email, password);
       navigate('/perfil');
     } catch (err) {
-      console.error(err);
-      setError('❌ Credenciales incorrectas o usuario no registrado.');
-      setEmail('');
-      setPassword('');
+      console.error('Login error:', err.code, err.message);
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setError('❌ Credenciales incorrectas o usuario no registrado.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('❌ Formato de correo inválido.');
+      } else {
+        setError('❌ Error al iniciar sesión. Intenta nuevamente.');
+      }
     }
   };
 
