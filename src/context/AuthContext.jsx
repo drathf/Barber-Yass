@@ -1,6 +1,11 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut, deleteUser } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  signOut,
+  deleteUser,
+  signInWithEmailAndPassword
+} from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
 
@@ -26,7 +31,12 @@ export const AuthProvider = ({ children }) => {
     return () => unsub();
   }, []);
 
-  // ✅ Cierre de sesión
+  // ✅ Login
+  const login = async (email, password) => {
+    return await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  // ✅ Logout
   const logout = async () => {
     try {
       await signOut(auth);
@@ -37,7 +47,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Eliminar cuenta desde el cliente
+  // ✅ Delete user
   const deleteUserAccount = async () => {
     try {
       const user = auth.currentUser;
@@ -48,12 +58,14 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Error al eliminar usuario:", error);
-      throw error; // para manejo externo si se necesita
+      throw error;
     }
   };
 
   return (
-    <AuthContext.Provider value={{ usuario, rol, cargando, logout, deleteUserAccount }}>
+    <AuthContext.Provider
+      value={{ usuario, rol, cargando, login, logout, deleteUserAccount }}
+    >
       {children}
     </AuthContext.Provider>
   );

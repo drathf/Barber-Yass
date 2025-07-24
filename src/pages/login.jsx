@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
 
+// Assets
 import logo from '../assets/galeria/logo.png';
 import fondo from '../assets/galeria/fondo-barberia.jpg';
-
 import corte1 from '../assets/galeria/cortesyservicios1.jpeg';
 import corte2 from '../assets/galeria/cortesyservicios2.jpeg';
 import corte3 from '../assets/galeria/cortesyservicios3.jpeg';
@@ -14,43 +14,43 @@ import corte4 from '../assets/galeria/cortesyservicios4.jpeg';
 import corte5 from '../assets/galeria/cortesyservicios5.jpeg';
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const galeria = [corte1, corte2, corte3, corte4, corte5];
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setError(null);
+    e.preventDefault();
+    setError(null);
 
-  if (!email.includes('@') || password.length < 6) {
-    return setError('❌ Ingresa un correo válido y una contraseña de al menos 6 caracteres.');
-  }
-
-  try {
-    setLoading(true);
-    const userCredential = await login(email.toLowerCase(), password); // ✅ corrección aquí
-    console.log('Usuario logueado:', userCredential.user);
-    navigate('/perfil');
-  } catch (err) {
-    console.error('Login error:', err.code, err.message);
-    if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-      setError('❌ Credenciales incorrectas o usuario no registrado.');
-    } else if (err.code === 'auth/invalid-email') {
-      setError('❌ Formato de correo inválido.');
-    } else {
-      setError('❌ Error al iniciar sesión. Intenta nuevamente.');
+    // Validación básica
+    if (!email.includes('@') || password.length < 6) {
+      return setError('❌ Ingresa un correo válido y una contraseña de al menos 6 caracteres.');
     }
-  } finally {
-    setLoading(false);
-  }
-};
 
-
-  const galeria = [corte1, corte2, corte3, corte4, corte5];
+    try {
+      setLoading(true);
+      const userCredential = await login(email.toLowerCase(), password);
+      console.log('✅ Usuario logueado:', userCredential.user);
+      navigate('/perfil');
+    } catch (err) {
+      console.error('Login error:', err.code, err.message);
+      const errorMsg =
+        err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password'
+          ? '❌ Credenciales incorrectas o usuario no registrado.'
+          : err.code === 'auth/invalid-email'
+          ? '❌ Formato de correo inválido.'
+          : '❌ Error al iniciar sesión. Intenta nuevamente.';
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -66,6 +66,7 @@ const Login = () => {
 
       <div className="absolute inset-0 bg-black bg-opacity-60 z-0" />
 
+      {/* Botón Volver */}
       <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
         <button
           onClick={() => navigate(-1)}
@@ -76,6 +77,7 @@ const Login = () => {
         </button>
       </div>
 
+      {/* Formulario de login */}
       <motion.div
         className="relative z-10 w-full max-w-sm bg-white bg-opacity-95 p-6 rounded-xl shadow-md text-center"
         initial={{ opacity: 0, scale: 0.95 }}
@@ -93,11 +95,7 @@ const Login = () => {
 
         <h2 className="text-xl font-bold mb-4 text-gray-800">Inicia sesión</h2>
 
-        {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
-            {error}
-          </div>
-        )}
+        {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">{error}</div>}
 
         <form onSubmit={handleLogin} className="space-y-4 text-left">
           <input
@@ -137,8 +135,9 @@ const Login = () => {
         </p>
       </motion.div>
 
+      {/* Galería */}
       <div className="relative z-10 mt-8 w-full max-w-3xl px-4">
-        {/* Desktop gallery */}
+        {/* Desktop */}
         <div className="hidden md:grid grid-cols-5 gap-3">
           {galeria.map((img, i) => (
             <img
@@ -151,7 +150,7 @@ const Login = () => {
           ))}
         </div>
 
-        {/* Mobile gallery */}
+        {/* Mobile */}
         <div className="md:hidden flex gap-3 overflow-x-auto scrollbar-hide">
           {galeria.map((img, i) => (
             <img

@@ -1,6 +1,6 @@
 // 📁 src/App.jsx
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom";
 
 // Layouts
 import Layout from "./components/Layout";
@@ -13,9 +13,9 @@ import ProtectedRouteByRol from "./components/ProtectedRouteByRol";
 // Páginas públicas
 import Home from "./pages/Home";
 import Login from "./pages/login";
-import RecuperarPassword from "./pages/RecuperarPassword";
 import Register from "./pages/register";
 import Galeria from "./pages/galeria";
+import RecuperarPassword from "./pages/RecuperarPassword";
 
 // Páginas privadas (usuarios autenticados)
 import Perfil from "./pages/perfil";
@@ -29,19 +29,19 @@ import AdminHorarios from "./components/AdminHorarios";
 import AdminReservasManual from "./components/AdminReservaManual";
 import AdminServicios from "./components/AdminServicios";
 
-// Página de error 404
+// Página 404
 const NotFound = () => (
   <div className="min-h-screen flex flex-col justify-center items-center text-center p-10">
     <h1 className="text-5xl font-bold text-red-600 mb-2">404</h1>
     <p className="text-lg text-gray-700 mb-4">Página no encontrada</p>
-    <a href="/" className="text-blue-600 underline">Volver al inicio</a>
+    <Link to="/" className="text-blue-600 underline">Volver al inicio</Link>
   </div>
 );
 
 function App() {
   return (
     <Routes>
-      {/* Rutas públicas y de usuarios */}
+      {/* 🔓 Rutas públicas */}
       <Route path="/recuperar" element={<RecuperarPassword />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
@@ -49,7 +49,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/galeria" element={<Galeria />} />
 
-        {/* Rutas privadas (requieren login) */}
+        {/* 🔐 Rutas privadas (usuarios autenticados) */}
         <Route
           path="/perfil"
           element={
@@ -76,7 +76,7 @@ function App() {
         />
       </Route>
 
-      {/* Rutas administrativas protegidas por rol */}
+      {/* 🔐 Rutas administrativas por rol */}
       <Route
         path="/admin"
         element={
@@ -92,7 +92,7 @@ function App() {
         <Route path="servicios" element={<AdminServicios />} />
       </Route>
 
-      {/* Página de error si no coincide ninguna ruta */}
+      {/* ❌ Ruta no encontrada */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
