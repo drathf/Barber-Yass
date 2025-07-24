@@ -20,7 +20,7 @@ import corte5 from '../assets/galeria/cortesyservicios5.jpeg';
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { loginWithGoogle, usuario } = useAuth();
+  const { loginWithGoogle, usuario, rol } = useAuth();
 
   const [mensaje, setMensaje] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -28,8 +28,11 @@ const Auth = () => {
   const galeria = [evento1, marca1, marca2, marca3, corte1, corte2, corte3, corte4, corte5];
 
   useEffect(() => {
-    if (usuario) navigate('/perfil');
-  }, [usuario, navigate]);
+    if (usuario && rol) {
+      if (rol === 'admin' || rol === 'god') navigate('/admin');
+      else navigate('/perfil');
+    }
+  }, [usuario, rol, navigate]);
 
   const handleGoogleLogin = async () => {
     setMensaje(null);
@@ -54,6 +57,7 @@ const Auth = () => {
       <Helmet>
         <title>Autenticación | BarberYass</title>
         <meta name="description" content="Inicia sesión o regístrate con tu cuenta Google en BarberYass." />
+        <link rel="icon" type="image/png" href="/logo.png" />
       </Helmet>
 
       <div className="absolute inset-0 bg-black bg-opacity-60 z-0" />
@@ -88,6 +92,7 @@ const Auth = () => {
           className={`w-full py-2 rounded-lg font-medium border flex items-center justify-center gap-2 ${
             loading ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-white hover:bg-gray-100 text-black'
           }`}
+          aria-label="Iniciar sesión con Google"
         >
           <img
             src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"

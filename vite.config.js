@@ -6,18 +6,18 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: 'dist',
-    sourcemap: false,          // ⛔ Desactiva en producción para mayor seguridad
-    minify: 'esbuild',
-    emptyOutDir: true,         // ✅ Limpia el directorio antes del build
+    outDir: 'dist',            // Carpeta que Firebase usará como 'public'
+    sourcemap: false,          // ⚠️ Desactivado para producción (seguridad)
+    minify: 'esbuild',         // Compilador rápido y moderno
+    emptyOutDir: true,         // Limpia el dist antes de construir
   },
   server: {
-    port: 5173,
-    open: true,
+    port: 5173,                // Puerto por defecto de Vite
+    open: true,                // Abre el navegador automáticamente
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, 'src'), // Puedes importar con "@/archivo"
     },
   },
 });
