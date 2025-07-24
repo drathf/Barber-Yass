@@ -31,7 +31,7 @@ const AdminHorarios = () => {
     if (["admin", "god", "barberyass"].includes(rol)) {
       cargarReservas();
     }
-  }, [rol]);
+  }, []);
 
   useEffect(() => {
     if (fecha) cargarHorarios();
@@ -61,12 +61,10 @@ const AdminHorarios = () => {
 
   const toggleHorario = async (hora) => {
     const actual = horarios.find(h => h.hora === hora);
-
     if (actual?.reservado) {
-      const confirmacion = confirm("Este horario está reservado. ¿Deseas liberarlo?");
+      const confirmacion = confirm("Este horario ya está reservado. ¿Deseas liberarlo?");
       if (!confirmacion) return;
 
-      // Liberar horario y eliminar reserva
       const reserva = reservas.find(r => r.fecha === fecha && r.hora === hora);
       if (reserva) {
         await deleteDoc(doc(db, "reservas", reserva.id));
@@ -76,9 +74,7 @@ const AdminHorarios = () => {
         disponible: true,
       });
     } else if (actual) {
-      await updateDoc(doc(db, "horarios", actual.id), {
-        disponible: !actual.disponible,
-      });
+      await updateDoc(doc(db, "horarios", actual.id), { disponible: !actual.disponible });
     } else {
       await addDoc(collection(db, "horarios"), {
         fecha,
@@ -87,40 +83,15 @@ const AdminHorarios = () => {
         reservado: false,
       });
     }
-
     await cargarHorarios();
     await cargarReservas();
   };
-
-  const eliminarReserva = async (id) => {
-    const reserva = reservas.find(r => r.id === id);
-    if (!reserva) return;
-
-    const q = query(
-      collection(db, "horarios"),
-      where("fecha", "==", reserva.fecha),
-      where("hora", "==", reserva.hora)
-    );
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-      const horarioId = snap.docs[0].id;
-      await updateDoc(doc(db, "horarios", horarioId), {
-        reservado: false,
-        disponible: true,
-      });
-    }
-    await deleteDoc(doc(db, "reservas", id));
-    cargarReservas();
-    cargarHorarios();
-  };
-
-  const filtradas = reservas.filter(r => r.nombre?.toLowerCase().includes(filtro.toLowerCase()));
 
   const estilos = {
     nuevo: "bg-blue-500 text-white hover:bg-blue-600",
     habilitado: "bg-green-600 text-white hover:bg-green-700",
     deshabilitado: "bg-yellow-500 text-white hover:bg-yellow-600",
-    reservado: "bg-gray-400 text-white hover:bg-gray-500",
+    reservado: "bg-gray-400 text-white hover:bg-gray-500 cursor-pointer",
   };
 
   return (
@@ -145,49 +116,12 @@ const AdminHorarios = () => {
               key={hora}
               onClick={() => toggleHorario(hora)}
               className={`py-2 px-3 rounded-lg font-semibold transition ${estilos[estado]}`}
+              title={estado === "reservado" ? `Reservado por: ${nombre}` : ""}
             >
               {hora} {label}
             </button>
           );
         })}
-      </div>
-
-      <h3 className="text-xl font-semibold mb-2">📋 Reservas</h3>
-      <input
-        type="text"
-        placeholder="Buscar cliente..."
-        value={filtro}
-        onChange={e => setFiltro(e.target.value)}
-        className="p-2 mb-4 w-full max-w-md border border-gray-300 rounded"
-      />
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full border text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-2">#</th>
-              <th className="p-2">Cliente</th>
-              <th className="p-2">Día</th>
-              <th className="p-2">Hora</th>
-              <th className="p-2">Estado</th>
-              <th className="p-2">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtradas.map((r, i) => (
-              <tr key={r.id} className="border-t">
-                <td className="p-2">{i + 1}</td>
-                <td className="p-2">{r.nombre}</td>
-                <td className="p-2">{new Date(r.fecha).toLocaleDateString("es-PE")}</td>
-                <td className="p-2">{r.hora}</td>
-                <td className="p-2">{r.estado}</td>
-                <td className="p-2">
-                  <button onClick={() => eliminarReserva(r.id)} className="text-red-600 hover:text-red-800">🗑️</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
     </div>
   );
