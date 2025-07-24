@@ -14,6 +14,7 @@ import { db } from "../firebase/firebase";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/galeria/logo.png";
 import { Helmet } from "react-helmet";
+import dayjs from "dayjs";
 
 const HORAS = [
   "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"
@@ -30,7 +31,7 @@ const AdminHorarios = () => {
     if (["admin", "god", "barberyass"].includes(rol)) {
       cargarReservas();
     }
-  }, []);
+  }, [rol]);
 
   useEffect(() => {
     if (fecha) cargarHorarios();
@@ -53,29 +54,31 @@ const AdminHorarios = () => {
     if (!h) return { estado: "nuevo", nombre: null };
     if (h.reservado) {
       const reserva = reservas.find(r => r.fecha === fecha && r.hora === hora);
-      return { estado: "reservado", nombre: reserva?.nombre || "Desconocido", reservaId: reserva?.id };
+      return { estado: "reservado", nombre: reserva?.nombre || "Desconocido" };
     }
     return { estado: h.disponible ? "habilitado" : "deshabilitado", nombre: null };
   };
 
   const toggleHorario = async (hora) => {
     const actual = horarios.find(h => h.hora === hora);
-    const { estado, reservaId } = getEstado(hora);
 
-    if (estado === "reservado") {
-      const confirmar = window.confirm("¿Eliminar reserva para liberar este horario?");
-      if (!confirmar) return;
+    if (actual?.reservado) {
+      const confirmacion = confirm("Este horario está reservado. ¿Deseas liberarlo?");
+      if (!confirmacion) return;
 
-      // Eliminar reserva y liberar slot
-      await deleteDoc(doc(db, "reservas", reservaId));
-      await updateDoc(doc(db, "horarios", actual.id), { reservado: false, disponible: true });
-      await cargarHorarios();
-      await cargarReservas();
-      return;
-    }
-
-    if (actual) {
-      await updateDoc(doc(db, "horarios", actual.id), { disponible: !actual.disponible });
+      // Liberar horario y eliminar reserva
+      const reserva = reservas.find(r => r.fecha === fecha && r.hora === hora);
+      if (reserva) {
+        await deleteDoc(doc(db, "reservas", reserva.id));
+      }
+      await updateDoc(doc(db, "horarios", actual.id), {
+        reservado: false,
+        disponible: true,
+      });
+    } else if (actual) {
+      await updateDoc(doc(db, "horarios", actual.id), {
+        disponible: !actual.disponible,
+      });
     } else {
       await addDoc(collection(db, "horarios"), {
         fecha,
@@ -84,13 +87,20 @@ const AdminHorarios = () => {
         reservado: false,
       });
     }
-    cargarHorarios();
+
+    await cargarHorarios();
+    await cargarReservas();
   };
 
   const eliminarReserva = async (id) => {
     const reserva = reservas.find(r => r.id === id);
     if (!reserva) return;
-    const q = query(collection(db, "horarios"), where("fecha", "==", reserva.fecha), where("hora", "==", reserva.hora));
+
+    const q = query(
+      collection(db, "horarios"),
+      where("fecha", "==", reserva.fecha),
+      where("hora", "==", reserva.hora)
+    );
     const snap = await getDocs(q);
     if (!snap.empty) {
       const horarioId = snap.docs[0].id;
@@ -108,9 +118,9 @@ const AdminHorarios = () => {
 
   const estilos = {
     nuevo: "bg-blue-500 text-white hover:bg-blue-600",
-    habilitado: "bg-green-500 text-white hover:bg-green-600",
+    habilitado: "bg-green-600 text-white hover:bg-green-700",
     deshabilitado: "bg-yellow-500 text-white hover:bg-yellow-600",
-    reservado: "bg-gray-500 text-white hover:bg-red-600",
+    reservado: "bg-gray-400 text-white hover:bg-gray-500",
   };
 
   return (
@@ -134,7 +144,7 @@ const AdminHorarios = () => {
             <button
               key={hora}
               onClick={() => toggleHorario(hora)}
-              className={`py-2 px-3 rounded-xl font-semibold transition ${estilos[estado]}`}
+              className={`py-2 px-3 rounded-lg font-semibold transition ${estilos[estado]}`}
             >
               {hora} {label}
             </button>
