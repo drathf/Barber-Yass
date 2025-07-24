@@ -28,10 +28,10 @@ const AdminHorarios = () => {
   const [filtro, setFiltro] = useState("");
 
   useEffect(() => {
-    if (rol === "admin" || rol === "god" || rol === "barberyass") {
+    if (["admin", "god", "barberyass"].includes(rol)) {
       cargarReservas();
     }
-  }, []);
+  }, [rol]);
 
   useEffect(() => {
     if (fecha) cargarHorarios();
@@ -98,7 +98,7 @@ const AdminHorarios = () => {
     nuevo: "bg-blue-500 text-white hover:bg-blue-600",
     habilitado: "bg-green-600 text-white hover:bg-green-700",
     deshabilitado: "bg-yellow-500 text-white hover:bg-yellow-600",
-    reservado: "bg-gray-400 text-white cursor-not-allowed",
+    reservado: "bg-gray-500 text-white cursor-not-allowed",
   };
 
   return (
@@ -123,7 +123,7 @@ const AdminHorarios = () => {
               key={hora}
               onClick={() => toggleHorario(hora)}
               disabled={estado === "reservado"}
-              className={`py-2 px-3 rounded-lg font-semibold transition ${estilos[estado]}`}
+              className={`py-2 px-3 rounded-xl font-medium transition duration-200 ${estilos[estado]}`}
             >
               {hora} {label}
             </button>
