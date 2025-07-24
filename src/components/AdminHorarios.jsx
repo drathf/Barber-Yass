@@ -1,10 +1,3 @@
-// Cambios visuales y de comportamiento solicitados:
-// 1. Reemplazar "(nuevo)" por "(Habilitar)" / "(Deshabilitar)"
-// 2. Visual moderno: negro y dorado
-// 3. Mostrar correctamente nombre del cliente
-
-// Reemplaza tu componente AdminHorarios.jsx con esto:
-
 import React, { useEffect, useState } from "react";
 import {
   collection,
@@ -20,9 +13,11 @@ import { db } from "../firebase/firebase";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/galeria/logo.png";
 import { Helmet } from "react-helmet";
-import dayjs from "dayjs";
 
-const HORAS = ["11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
+const HORAS = [
+  "11:00", "12:00", "13:00", "14:00", "15:00",
+  "16:00", "17:00", "18:00", "19:00"
+];
 
 const AdminHorarios = () => {
   const { rol } = useAuth();
@@ -32,9 +27,8 @@ const AdminHorarios = () => {
   const [filtro, setFiltro] = useState("");
 
   useEffect(() => {
-    if (rol !== "admin" && rol !== "god" && rol !== "barberyass") return;
-    cargarReservas();
-  }, []);
+    if (["admin", "god", "barberyass"].includes(rol)) cargarReservas();
+  }, [rol]);
 
   useEffect(() => {
     if (fecha) cargarHorarios();
@@ -63,7 +57,9 @@ const AdminHorarios = () => {
     const actual = horarios.find(h => h.hora === hora);
     if (actual?.reservado) return;
     if (actual) {
-      await updateDoc(doc(db, "horarios", actual.id), { disponible: !actual.disponible });
+      await updateDoc(doc(db, "horarios", actual.id), {
+        disponible: !actual.disponible,
+      });
     } else {
       await addDoc(collection(db, "horarios"), {
         fecha,
@@ -94,6 +90,11 @@ const AdminHorarios = () => {
 
   const filtradas = reservas.filter(r => r.nombre?.toLowerCase().includes(filtro.toLowerCase()));
 
+  const getNombreCliente = (hora) => {
+    const r = reservas.find(r => r.fecha === fecha && r.hora === hora);
+    return r ? `(${r.nombre})` : "";
+  };
+
   const estilos = {
     nuevo: "bg-[#d4af37] text-black hover:brightness-110",
     habilitado: "bg-black text-[#d4af37] hover:brightness-110",
@@ -107,14 +108,28 @@ const AdminHorarios = () => {
       <img src={logo} className="w-24 mx-auto mb-4" alt="Logo" />
       <h2 className="text-center text-2xl font-bold mb-6">🗓️ Gestión de Horarios</h2>
 
-      <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className="block mx-auto mb-6 p-2 rounded text-black" />
+      <input
+        type="date"
+        value={fecha}
+        onChange={e => setFecha(e.target.value)}
+        className="block mx-auto mb-6 p-2 rounded text-black"
+      />
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
         {HORAS.map(hora => {
           const estado = getEstado(hora);
-          const label = estado === "habilitado" ? "(Deshabilitar)" : estado === "deshabilitado" ? "(Habilitar)" : estado === "nuevo" ? "(Habilitar)" : "(Reservado)";
+          const label = estado === "habilitado"
+            ? "(Deshabilitar)"
+            : estado === "deshabilitado" || estado === "nuevo"
+            ? "(Habilitar)"
+            : `(Reservado ${getNombreCliente(hora)})`;
           return (
-            <button key={hora} onClick={() => toggleHorario(hora)} disabled={estado === "reservado"} className={`p-2 rounded font-bold ${estilos[estado]}`}>
+            <button
+              key={hora}
+              onClick={() => toggleHorario(hora)}
+              disabled={estado === "reservado"}
+              className={`p-2 rounded font-bold ${estilos[estado]}`}
+            >
               {hora} {label}
             </button>
           );
@@ -122,7 +137,13 @@ const AdminHorarios = () => {
       </div>
 
       <h3 className="text-xl font-semibold mb-2">📋 Reservas</h3>
-      <input type="text" placeholder="Buscar cliente..." value={filtro} onChange={e => setFiltro(e.target.value)} className="p-2 mb-4 w-full max-w-md text-black rounded" />
+      <input
+        type="text"
+        placeholder="Buscar cliente..."
+        value={filtro}
+        onChange={e => setFiltro(e.target.value)}
+        className="p-2 mb-4 w-full max-w-md text-black rounded"
+      />
 
       <div className="overflow-x-auto">
         <table className="min-w-full border text-sm text-[#d4af37]">
