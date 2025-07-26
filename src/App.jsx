@@ -1,4 +1,4 @@
-// src/App.jsx
+// 📁 src/App.jsx
 import React from "react";
 import { Routes, Route, Link, Outlet } from "react-router-dom";
 
@@ -30,7 +30,6 @@ import wsIcon from "./assets/galeria/ws-white.svg";
 import igIcon from "./assets/galeria/ig-white.svg";
 import gmailIcon from "./assets/galeria/gmail-white.svg";
 
-
 // ❌ Página 404
 const NotFound = () => (
   <div className="min-h-screen flex flex-col justify-center items-center text-center p-10">
@@ -41,7 +40,6 @@ const NotFound = () => (
     </Link>
   </div>
 );
-
 
 // 📦 Layout global (Navbar + Footer)
 const Layout = () => {
@@ -64,9 +62,7 @@ const Layout = () => {
             <p className="text-sm">
               © {new Date().getFullYear()} Lugo Studio | BarberYass
             </p>
-            <p className="text-xs text-gray-400">
-              Todos los derechos reservados.
-            </p>
+            <p className="text-xs text-gray-400">Todos los derechos reservados.</p>
           </div>
           <div className="flex gap-4 items-center">
             <a
@@ -101,16 +97,14 @@ const Layout = () => {
   );
 };
 
-
 function App() {
   return (
     <Routes>
-      {/* 🔓 Ruta pública independiente */}
+      {/* 🔓 Rutas públicas */}
       <Route path="/recuperar" element={<RecuperarPassword />} />
 
       {/* Layout global */}
       <Route element={<Layout />}>
-        {/* Rutas públicas */}
         <Route path="/" element={<Home />} />
         <Route path="/galeria" element={<Galeria />} />
         <Route path="/servicios" element={<Servicios />} />
@@ -138,9 +132,7 @@ function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRouteByRol
-              rolesPermitidos={["god", "admin", "barberyass"]}
-            >
+            <ProtectedRouteByRol rolesPermitidos={["god", "admin", "barberyass"]}>
               <Outlet />
             </ProtectedRouteByRol>
           }

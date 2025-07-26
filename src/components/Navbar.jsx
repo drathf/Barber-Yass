@@ -15,7 +15,7 @@ const Navbar = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [esTransparente, setEsTransparente] = useState(true);
 
-  // Cambiar transparencia del navbar solo en home
+  // Cambiar transparencia solo en Home
   useEffect(() => {
     const manejarScroll = () => {
       setEsTransparente(location.pathname === "/" && window.scrollY <= 50);
@@ -25,7 +25,7 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", manejarScroll);
   }, [location.pathname]);
 
-  // Estado de sesión
+  // Verificar sesión
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -37,8 +37,6 @@ const Navbar = () => {
             const data = snap.data();
             setNombreUsuario(data.nombre || user.email);
             setRolUsuario(data.rol || "");
-          } else {
-            setRolUsuario("");
           }
         } catch (error) {
           console.error("Error cargando usuario:", error);
@@ -77,21 +75,18 @@ const Navbar = () => {
       transition={{ duration: 0.4 }}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3 text-white">
-        {/* Logo */}
+        
+        {/* Logo → perfil/login */}
         <button
           onClick={() => navigate("/perfil")}
           className="flex items-center gap-2 hover:scale-105 transition"
           title={usuario ? "Ir a tu perfil" : "Iniciar sesión"}
         >
-          <img
-            src={logo}
-            alt="Logo Lugo Studio"
-            className="w-10 h-10 object-contain"
-          />
+          <img src={logo} alt="Logo Lugo Studio" className="w-10 h-10 object-contain" />
           <span className="font-bold text-lg tracking-wide">Lugo Studio</span>
         </button>
 
-        {/* Menú móvil */}
+        {/* Botón menú móvil */}
         <button
           className="md:hidden text-xl focus:outline-none"
           onClick={() => setMenuAbierto((prev) => !prev)}
@@ -119,7 +114,7 @@ const Navbar = () => {
             </Link>
           ))}
 
-          {/* Admin Panel */}
+          {/* Panel admin */}
           {usuario && ["god", "admin", "barberyass"].includes(rolUsuario) && (
             <Link
               to="/admin"
@@ -132,8 +127,8 @@ const Navbar = () => {
             </Link>
           )}
 
-          {/* Usuario o login */}
-          {usuario ? (
+          {/* Usuario con opción cerrar sesión */}
+          {usuario && (
             <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3">
               <span className="text-xs md:text-sm truncate max-w-[150px] md:max-w-none">
                 👤 {nombreUsuario}
@@ -144,23 +139,6 @@ const Navbar = () => {
               >
                 Cerrar sesión
               </button>
-            </div>
-          ) : (
-            <div className="flex flex-col md:flex-row gap-2">
-              <Link
-                to="/perfil"
-                onClick={() => setMenuAbierto(false)}
-                className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-white text-xs transition text-center"
-              >
-                Iniciar sesión
-              </Link>
-              <Link
-                to="/recuperar"
-                onClick={() => setMenuAbierto(false)}
-                className="text-gray-300 hover:text-purple-400 text-xs text-center"
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
             </div>
           )}
         </nav>

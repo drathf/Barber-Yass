@@ -1,10 +1,11 @@
+// 📁 src/firebase/firebase.js
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getFunctions } from "firebase/functions";
 import { getStorage } from "firebase/storage";
 
-// ✅ Configuración de Firebase desde la consola
+// ✅ Configuración de Firebase (copia los datos exactos desde tu consola Firebase)
 const firebaseConfig = {
   apiKey: "AIzaSyAtDkZlsTksbzDOUuA9S8XYQc5dxpbeJTg",
   authDomain: "barberyass.firebaseapp.com",
@@ -15,16 +16,21 @@ const firebaseConfig = {
   measurementId: "G-LGTKEPPCTH",
 };
 
-// ✅ Inicializa la app de Firebase solo una vez
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+// ✅ Inicializa la App de Firebase (solo una vez)
+let app;
+try {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+  console.log("🔥 Firebase inicializado correctamente");
+} catch (error) {
+  console.error("❌ Error inicializando Firebase:", error);
+}
 
-// ✅ Inicializa los servicios de Firebase
+// ✅ Inicializa y exporta los servicios de Firebase
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const functions = getFunctions(app);
 export const storage = getStorage(app);
 
-// 🔹 Log para verificar que la app esté conectada
-console.log("🔥 Firebase inicializado correctamente");
+// 🔹 Logs para depurar conexiones
 console.log("📂 Firestore conectado:", db);
 console.log("🔑 Auth conectado:", auth);
