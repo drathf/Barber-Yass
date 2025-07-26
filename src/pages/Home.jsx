@@ -5,15 +5,15 @@ import { Helmet } from "react-helmet-async";
 
 // Fondo principal
 import fondo from "../assets/galeria/fondo-barberia2.jpg";
-import logoNotBeer from "../assets/galeria/logo-notbeer.jpg";
-import logoMarma2 from "../assets/galeria/logo-marma2.jpg";
-import logo99 from "../assets/galeria/logo-99.jpg";
-import servicio1 from "../assets/galeria/servicio1.jpg";
-import servicio18 from "../assets/galeria/servicio18.jpg";
-import servicio2 from "../assets/galeria/servicio2.jpg";
-import servicio6 from "../assets/galeria/servicio6.jpg";
-import servicio7 from "../assets/galeria/servicio7.jpg";
-import servicio17 from "../assets/galeria/servicio17.jpg";
+import logoNotBeer from "../assets/galeria/Logo NOT BEER. marca1.jpg";
+import logoMarma2 from "../assets/galeria/Logo MARMA2. marca2.jpg";
+import logo99 from "../assets/galeria/Logo 99. marca3.jpg";
+import servicio1 from "../assets/galeria/servicios (1).jpg";
+import servicio18 from "../assets/galeria/servicios (18).jpg";
+import servicio2 from "../assets/galeria/servicios (2).jpg";
+import servicio6 from "../assets/galeria/servicios (6).jpg";
+import servicio7 from "../assets/galeria/servicios (7).jpg";
+import servicio17 from "../assets/galeria/servicios (17).jpg";
 import wsIcon from "../assets/galeria/ws-white.svg";
 
 export default function Home() {
@@ -73,9 +73,6 @@ export default function Home() {
           </Link>
         </motion.div>
       </div>
-
-      {/* Secciones */}
-      {/* ... resto igual (servicios, marcas, CTA final) */}
 
       {/* Botón WhatsApp */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
