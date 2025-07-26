@@ -2,28 +2,24 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
+// ⚡ Configuración de Vite optimizada para Firebase Hosting
 export default defineConfig({
   plugins: [react()],
-
-  // ✅ Base para Firebase Hosting (rutas relativas)
-  base: './',
-
+  base: './', // ✅ rutas relativas para que funcione en Firebase Hosting
   build: {
-    outDir: 'dist',             // Carpeta de salida
-    sourcemap: false,           // 🔒 Oculta el código fuente en producción
-    minify: 'esbuild',          // Compilador rápido
-    emptyOutDir: true,          // Limpia dist antes de cada build
-    chunkSizeWarningLimit: 1000 // Evita warnings de tamaño
+    outDir: 'dist',           // carpeta donde se genera el build
+    sourcemap: false,         // no exponer código fuente
+    minify: 'esbuild',        // build rápido y optimizado
+    emptyOutDir: true,        // limpiar carpeta dist antes del build
+    chunkSizeWarningLimit: 1000 // evitar warnings de archivos grandes
   },
-
   server: {
-    port: 5173, // Puerto local de Vite
-    open: true  // Abre el navegador automáticamente al hacer npm run dev
+    port: 5173,               // puerto por defecto en desarrollo
+    open: true                // abre el navegador automáticamente
   },
-
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src') // 👈 Permite importar con "@/archivo"
+      '@': path.resolve(__dirname, 'src') // ✅ usar imports con "@/..."
     }
   }
 });
