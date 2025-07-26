@@ -1,3 +1,35 @@
-node_modules
-dist
+# Dependencias
+node_modules/
+
+# Build de producción
+dist/
+build/
+
+# Archivos de entorno
 .env
+.env.local
+.env.*.local
+
+# Archivos de Firebase
+.firebase/
+.firebaserc
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Configuración de VS Code
+.vscode/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Archivos temporales
+*.swp
+*.swo
+
+# Cobertura de pruebas
+coverage/
