@@ -1,86 +1,113 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+// src/context/AuthContext.jsx
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { auth, db } from "../firebase/firebase";
 import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
   onAuthStateChanged,
-} from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebase/firebase';
+} from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
-// Crear el contexto de autenticación
 const AuthContext = createContext();
 
-// Hook personalizado para acceder al contexto
+// Hook para usar el contexto en otros componentes
 export const useAuth = () => useContext(AuthContext);
 
-// Proveedor del contexto
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = useState(null);
   const [rol, setRol] = useState(null);
   const [cargando, setCargando] = useState(true);
 
-  // Iniciar sesión con Google
+  /**
+   * Inicio de sesión con Google
+   * Si el usuario no existe en Firestore lo crea con rol por defecto 👤 (user)
+   */
   const loginWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
 
-    const ref = doc(db, 'usuarios', user.uid);
-    const snap = await getDoc(ref);
+      const userRef = doc(db, "usuarios", result.user.uid);
+      const snap = await getDoc(userRef);
 
-    if (!snap.exists()) {
-      await setDoc(ref, {
-        nombre: user.displayName || '',
-        telefono: '',
-        email: user.email.toLowerCase(),
-        fechaNacimiento: '',
-        rol: 'user',
-        creado: new Date().toISOString(),
-      });
+      if (!snap.exists()) {
+        // Crear usuario nuevo en Firestore
+        await setDoc(userRef, {
+          nombre: result.user.displayName,
+          email: result.user.email,
+          foto: result.user.photoURL || "",
+          rol: "user", // Rol por defecto
+          requierePago: true, // Debe pagar 50% para reservar
+          creado: new Date().toISOString(),
+        });
+        setRol("user");
+      } else {
+        setRol(snap.data().rol);
+      }
+    } catch (error) {
+      console.error("Error en login con Google:", error);
+      alert("Error al iniciar sesión con Google");
     }
-
-    return result;
   };
 
-  // Cerrar sesión
-  const logout = () => signOut(auth);
+  /**
+   * Cerrar sesión
+   */
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
+  };
 
-  // Observar cambios en el estado del usuario
+  /**
+   * Listener de cambios en sesión Firebase
+   * Obtiene datos y rol desde Firestore
+   */
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUsuario(user);
+
       if (user) {
-        setUsuario(user);
         try {
-          const ref = doc(db, 'usuarios', user.uid);
-          const snap = await getDoc(ref);
-          setRol(snap.exists() ? snap.data().rol : 'user');
+          const userRef = doc(db, "usuarios", user.uid);
+          const snap = await getDoc(userRef);
+
+          if (snap.exists()) {
+            setRol(snap.data().rol);
+          } else {
+            // Si el documento no existe, crearlo con valores por defecto
+            await setDoc(userRef, {
+              nombre: user.displayName,
+              email: user.email,
+              foto: user.photoURL || "",
+              rol: "user",
+              requierePago: true,
+              creado: new Date().toISOString(),
+            });
+            setRol("user");
+          }
         } catch (error) {
-          console.error('Error al obtener el rol del usuario:', error);
+          console.error("Error obteniendo datos del usuario:", error);
           setRol(null);
         }
       } else {
-        setUsuario(null);
         setRol(null);
       }
 
       setCargando(false);
     });
 
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{
-        usuario,
-        rol,
-        cargando,
-        loginWithGoogle,
-        logout,
-      }}
+      value={{ usuario, rol, loginWithGoogle, logout, cargando }}
     >
-      {!cargando && children}
+      {children}
     </AuthContext.Provider>
   );
 };

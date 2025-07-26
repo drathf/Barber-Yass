@@ -1,4 +1,3 @@
-// src/layouts/Layout.jsx
 import React from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
@@ -20,52 +19,40 @@ const Layout = () => {
         <Outlet />
       </main>
 
-      {/* Footer con enlaces y contacto */}
+      {/* Footer limpio */}
       <footer className="bg-black text-white py-6 mt-10 border-t border-gray-800">
         <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6 md:gap-4">
-          {/* Derechos reservados */}
           <div className="text-center md:text-left">
             <p className="text-sm">© {new Date().getFullYear()} BarberYass</p>
             <p className="text-xs text-gray-400">Todos los derechos reservados.</p>
           </div>
 
-          {/* Íconos + botón WhatsApp */}
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <div className="flex gap-4">
-              <a
-                href="https://wa.me/51907011564"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="WhatsApp"
-                className="hover:scale-110 transition-transform drop-shadow-md"
-              >
-                <img src={wsIcon} alt="WhatsApp" className="w-6 h-6" />
-              </a>
-              <a
-                href="https://www.instagram.com/barberyass47/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="hover:scale-110 transition-transform drop-shadow-md"
-              >
-                <img src={igIcon} alt="Instagram" className="w-6 h-6" />
-              </a>
-              <a
-                href="mailto:barberyass@gmail.com"
-                aria-label="Correo electrónico"
-                className="hover:scale-110 transition-transform drop-shadow-md"
-              >
-                <img src={gmailIcon} alt="Gmail" className="w-6 h-6" />
-              </a>
-            </div>
-
+          {/* Íconos sociales */}
+          <div className="flex gap-4 items-center">
             <a
               href="https://wa.me/51907011564"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-full shadow-md transition mt-3 sm:mt-0"
+              aria-label="WhatsApp"
+              className="hover:scale-110 transition-transform drop-shadow-md"
             >
-              💬 Contáctanos por WhatsApp
+              <img src={wsIcon} alt="WhatsApp" className="w-6 h-6" />
+            </a>
+            <a
+              href="https://www.instagram.com/barberyass47/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              className="hover:scale-110 transition-transform drop-shadow-md"
+            >
+              <img src={igIcon} alt="Instagram" className="w-6 h-6" />
+            </a>
+            <a
+              href="mailto:barberyass@gmail.com"
+              aria-label="Correo electrónico"
+              className="hover:scale-110 transition-transform drop-shadow-md"
+            >
+              <img src={gmailIcon} alt="Gmail" className="w-6 h-6" />
             </a>
           </div>
         </div>

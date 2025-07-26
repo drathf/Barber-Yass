@@ -1,191 +1,248 @@
-// 📁 src/pages/reservar.jsx
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
-import { Helmet } from 'react-helmet';
-
-import { db } from '../firebase/firebase';
-import { useAuth } from '../context/AuthContext'; // ✅ Importado correctamente
-
-import qrYape from '../assets/galeria/yape-qr.png';
-import logo from '../assets/galeria/logo.png';
+import React, { useEffect, useState } from "react";
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  onSnapshot,
+  getDoc,
+} from "firebase/firestore";
+import { db } from "../firebase/firebase";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { useAuth } from "../context/AuthContext";
 
 const Reservar = () => {
   const { usuario } = useAuth();
-  const navigate = useNavigate();
 
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
   const [horariosDisponibles, setHorariosDisponibles] = useState([]);
   const [serviciosDisponibles, setServiciosDisponibles] = useState([]);
-  const [seleccionado, setSeleccionado] = useState(null);
-  const [servicio, setServicio] = useState('');
-  const [metodoPago, setMetodoPago] = useState('');
-  const [aplica50, setAplica50] = useState(false);
-  const [comentario, setComentario] = useState('');
-  const [referencia, setReferencia] = useState('');
-  const [mensaje, setMensaje] = useState('');
-  const [reservando, setReservando] = useState(false);
 
+  // Campos del formulario
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [servicio, setServicio] = useState("");
+  const [horario, setHorario] = useState("");
+  const [requierePago, setRequierePago] = useState(false);
+
+  const [mensaje, setMensaje] = useState("");
+  const [procesando, setProcesando] = useState(false);
+
+  // Teléfono de Barber Yass
+  const telefonoBarberYass = "51907011564";
+
+  // Formatear fecha DD/MM/AAAA
+  const formatearFecha = (fecha) => {
+    const dia = String(fecha.getDate()).padStart(2, "0");
+    const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+    const anio = fecha.getFullYear();
+    return `${dia}/${mes}/${anio}`;
+  };
+
+  // Cargar datos del usuario autenticado
   useEffect(() => {
-    const cargarDatos = async () => {
-      try {
-        const horariosSnap = await getDocs(collection(db, 'horarios'));
-        const horarios = horariosSnap.docs
-          .map((doc) => ({ id: doc.id, ...doc.data() }))
-          .filter((h) => h.disponible);
-
-        setHorariosDisponibles(horarios);
-
-        const serviciosSnap = await getDocs(collection(db, 'servicios'));
-        const servicios = serviciosSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        setServiciosDisponibles(servicios);
-      } catch (error) {
-        console.error('Error al cargar horarios/servicios:', error);
-        setMensaje('❌ Error al cargar datos. Intenta nuevamente.');
+    const cargarDatosUsuario = async () => {
+      if (usuario) {
+        const snap = await getDoc(doc(db, "usuarios", usuario.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          setNombre(data.nombre || "");
+          setEmail(data.email || "");
+          setRequierePago(data.requierePago || false);
+        }
       }
     };
+    cargarDatosUsuario();
+  }, [usuario]);
 
-    cargarDatos();
+  // Cargar servicios en tiempo real
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "servicios"), (snapshot) => {
+      setServiciosDisponibles(
+        snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+      );
+    });
+    return () => unsubscribe();
   }, []);
 
+  // Cargar horarios disponibles en tiempo real
+  useEffect(() => {
+    const fechaFormato = formatearFecha(fechaSeleccionada);
+    const unsubscribe = onSnapshot(collection(db, "horarios"), (snapshot) => {
+      const disponibles = snapshot.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter(
+          (h) => h.fecha === fechaFormato && h.disponible && !h.reservado
+        );
+      setHorariosDisponibles(disponibles);
+    });
+    return () => unsubscribe();
+  }, [fechaSeleccionada]);
+
+  // Guardar reserva con validación del 50%
   const reservarCita = async () => {
-    if (!usuario || !seleccionado || !servicio || !metodoPago) {
-      setMensaje('❗ Completa todos los campos obligatorios.');
+    if (!nombre || !email || !servicio || !horario) {
+      setMensaje("⚠️ Completa todos los campos");
       return;
     }
 
-    setReservando(true);
-    setMensaje('');
+    // Validar si requiere pago adelantado
+    if (requierePago) {
+      setMensaje(
+        "⚠️ Este usuario debe pagar el 50% adelantado antes de reservar. Contacta a Barber Yass."
+      );
+      return;
+    }
+
+    setProcesando(true);
 
     try {
-      const servicioData = serviciosDisponibles.find((s) => s.id === servicio);
-      const montoPagado = aplica50 ? servicioData.precio / 2 : 0;
+      const horarioSeleccionado = horariosDisponibles.find(
+        (h) => h.id === horario
+      );
+      if (!horarioSeleccionado) {
+        setMensaje("⚠️ El horario ya no está disponible");
+        setProcesando(false);
+        return;
+      }
 
-      await addDoc(collection(db, 'reservas'), {
-        email: usuario.email,
-        nombre: usuario.displayName || '',
-        telefono: usuario.phoneNumber || '',
-        fecha: seleccionado.fecha,
-        hora: seleccionado.hora,
-        servicio: servicioData.nombre,
-        precio: servicioData.precio,
-        metodoPago,
-        aplica50,
-        montoPagado,
-        comentario,
-        referencia,
-        estado: 'activa',
-        barbero: 'Yass',
+      // Registrar la reserva
+      const servicioData = serviciosDisponibles.find((s) => s.id === servicio);
+      const ref = await addDoc(collection(db, "reservas"), {
+        horarioId: horarioSeleccionado.id,
+        fecha: horarioSeleccionado.fecha,
+        hora: horarioSeleccionado.hora,
+        nombre,
+        email,
+        servicio: servicioData?.nombre || "Servicio",
+        monto: servicioData?.precio || 0,
+        estado: "activa",
         creado: new Date().toISOString(),
       });
 
-      await updateDoc(doc(db, 'horarios', seleccionado.id), {
+      // Actualizar horario
+      await updateDoc(doc(db, "horarios", horarioSeleccionado.id), {
         reservado: true,
         disponible: false,
+        reservaId: ref.id,
       });
 
-      const msg = `👤 ${usuario.displayName || 'Cliente'} ha reservado: 💈 ${servicioData.nombre} (S/. ${servicioData.precio}) el 📅 ${seleccionado.fecha} a las 🕒 ${seleccionado.hora}. Pago: ${metodoPago}${aplica50 ? ' (50% pagado)' : ''}.`;
-      const whatsappURL = `https://wa.me/+51907011564?text=${encodeURIComponent(msg)}`;
-      window.open(whatsappURL, '_blank');
+      // WhatsApp de confirmación
+      const whatsappMsg = `👋 Hola soy, ${nombre}, he reservado una cita ✅%0A📅 *${horarioSeleccionado.fecha}* a las *${horarioSeleccionado.hora}*%0A💈 Servicio: *${
+        servicioData?.nombre || "Servicio"
+      }*%0A💲 Monto: *S/. ${servicioData?.precio || 0}*%0A%0A¡Agradezco tu confirmacion!`;
+      window.open(`https://wa.me/${telefonoBarberYass}?text=${whatsappMsg}`, "_blank");
 
-      navigate('/confirmacion');
-    } catch (err) {
-      console.error(err);
-      setMensaje('❌ Error al reservar. Intenta nuevamente.');
+      setMensaje("✅ Reserva realizada con éxito");
+      setServicio("");
+      setHorario("");
+    } catch (error) {
+      console.error("Error creando la reserva:", error);
+      setMensaje("❌ Error al reservar, intenta nuevamente");
     } finally {
-      setReservando(false);
+      setProcesando(false);
     }
   };
 
   return (
-    <div className="min-h-screen p-6 max-w-3xl mx-auto">
-      {/* SEO */}
-      <Helmet>
-        <title>Reservar Cita | BarberYass</title>
-        <meta name="description" content="Reserva tu cita exclusiva con BarberYass. Elige día, horario, servicio y método de pago." />
-        <meta name="keywords" content="reserva barbería, cita barbera, BarberYass, servicios" />
-        <meta name="author" content="BarberYass" />
-      </Helmet>
+    <div className="p-6 max-w-xl mx-auto">
+      <h1 className="text-2xl font-bold text-center mb-6">Reserva tu cita</h1>
 
-      {/* Logo */}
-      <div className="flex justify-center mb-6">
-        <img src={logo} alt="BarberYass" className="w-24 rounded-full" />
-      </div>
-
-      <h2 className="text-xl font-semibold text-center mb-4">Reserva tu cita</h2>
-
-      {mensaje && (
-        <div className={`text-sm mb-4 p-3 rounded ${mensaje.startsWith('❌') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-          {mensaje}
+      {/* Mostrar mensaje del 50% si aplica */}
+      {requierePago && (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 p-3 rounded mb-4 text-center">
+          ⚠️ Este usuario debe pagar el 50% adelantado antes de reservar. 
+          <br />
+          <button
+            onClick={() =>
+              window.open(
+                `https://wa.me/${telefonoBarberYass}?text=Hola%20Barber%20Yass,%20quiero%20realizar%20mi%20pago%20adelantado%20del%2050%25.`,
+                "_blank"
+              )
+            }
+            className="mt-2 px-4 py-1 bg-green-600 hover:bg-green-700 text-white rounded"
+          >
+            💬 Contactar por WhatsApp
+          </button>
         </div>
       )}
 
-      {/* Horarios */}
-      <div className="mb-4">
-        <label className="block font-semibold mb-1">Horario disponible *</label>
-        <select className="w-full p-2 border rounded" onChange={(e) => {
-          const id = e.target.value;
-          const horario = horariosDisponibles.find((h) => h.id === id);
-          setSeleccionado(horario);
-        }}>
-          <option value="">Selecciona un horario</option>
-          {horariosDisponibles.map((h) => (
-            <option key={h.id} value={h.id}>{`${h.fecha} - ${h.hora}`}</option>
-          ))}
-        </select>
+      {mensaje && !requierePago && (
+        <p
+          className={`text-center mb-4 ${
+            mensaje.includes("✅") ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          {mensaje}
+        </p>
+      )}
+
+      <input
+        type="text"
+        placeholder="Nombre y apellido"
+        className="border p-2 rounded w-full mb-3"
+        value={nombre}
+        onChange={(e) => setNombre(e.target.value)}
+      />
+
+      <input
+        type="email"
+        placeholder="Correo electrónico"
+        className="border p-2 rounded w-full mb-3"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        disabled
+      />
+
+      <select
+        className="border p-2 rounded w-full mb-3"
+        value={servicio}
+        onChange={(e) => setServicio(e.target.value)}
+        disabled={requierePago}
+      >
+        <option value="">Selecciona un servicio</option>
+        {serviciosDisponibles.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.nombre} - S/. {s.precio}
+          </option>
+        ))}
+      </select>
+
+      <div className="mb-3">
+        <DatePicker
+          selected={fechaSeleccionada}
+          onChange={(date) => setFechaSeleccionada(date)}
+          dateFormat="dd/MM/yyyy"
+          className="border p-2 rounded w-full"
+          disabled={requierePago}
+        />
       </div>
 
-      {/* Servicios */}
-      <div className="mb-4">
-        <label className="block font-semibold mb-1">Servicio *</label>
-        <select className="w-full p-2 border rounded" value={servicio} onChange={(e) => setServicio(e.target.value)}>
-          <option value="">Selecciona un servicio</option>
-          {serviciosDisponibles.map((s) => (
-            <option key={s.id} value={s.id}>{`${s.nombre} - S/. ${s.precio}`}</option>
-          ))}
-        </select>
-      </div>
+      <select
+        className="border p-2 rounded w-full mb-3"
+        value={horario}
+        onChange={(e) => setHorario(e.target.value)}
+        disabled={requierePago}
+      >
+        <option value="">Selecciona un horario</option>
+        {horariosDisponibles.map((h) => (
+          <option key={h.id} value={h.id}>
+            {h.hora}
+          </option>
+        ))}
+      </select>
 
-      {/* Método de pago */}
-      <div className="mb-4">
-        <label className="block font-semibold mb-1">Método de pago *</label>
-        <select className="w-full p-2 border rounded" value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)}>
-          <option value="">Selecciona una opción</option>
-          <option value="Efectivo">Efectivo</option>
-          <option value="Yape">Yape</option>
-          <option value="Plin">Plin</option>
-        </select>
-        {metodoPago === 'Yape' && (
-          <img src={qrYape} alt="QR Yape" className="h-32 mt-2 mx-auto" />
-        )}
-      </div>
-
-      {/* 50% adelantado */}
-      <div className="mb-4 flex items-center gap-2">
-        <input type="checkbox" checked={aplica50} onChange={(e) => setAplica50(e.target.checked)} />
-        <label>¿Pagó el 50% por adelantado?</label>
-      </div>
-
-      {/* Comentario */}
-      <div className="mb-4">
-        <label className="block font-semibold mb-1">Comentario (opcional)</label>
-        <textarea className="w-full p-2 border rounded" rows="2" value={comentario} onChange={(e) => setComentario(e.target.value)} />
-      </div>
-
-      {/* Referencia */}
-      <div className="mb-6">
-        <label className="block font-semibold mb-1">Referencia de pago (opcional)</label>
-        <input type="text" className="w-full p-2 border rounded" value={referencia} onChange={(e) => setReferencia(e.target.value)} />
-      </div>
-
-      {/* Botón */}
       <button
         onClick={reservarCita}
-        disabled={reservando}
-        className={`w-full py-3 rounded-lg font-semibold text-white transition ${
-          reservando ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-gray-800'
+        disabled={procesando || requierePago}
+        className={`w-full py-2 rounded text-white ${
+          procesando || requierePago
+            ? "bg-gray-400"
+            : "bg-black hover:bg-gray-800"
         }`}
       >
-        {reservando ? 'Reservando...' : 'Confirmar Reserva'}
+        {procesando ? "Reservando..." : "Confirmar Reserva"}
       </button>
     </div>
   );

@@ -1,14 +1,22 @@
 // src/components/ProtectedRoute.jsx
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 /**
- * Componente para proteger rutas que solo usuarios autenticados pueden ver.
- * Redirige a /login si no hay usuario autenticado.
+ * Protege rutas para usuarios autenticados
+ * Redirige a /login si no hay sesión activa
  */
 const ProtectedRoute = ({ children }) => {
-  const { usuario } = useAuth();
+  const { usuario, cargando } = useAuth();
+
+  if (cargando) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        Cargando...
+      </div>
+    );
+  }
 
   if (!usuario) {
     return <Navigate to="/login" />;

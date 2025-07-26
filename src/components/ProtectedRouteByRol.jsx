@@ -1,41 +1,56 @@
-// src/components/ProtectedRouteByRol.jsx
-import React from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import React, { useEffect, useState } from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { auth, db } from "../firebase/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
-const jerarquiaRoles = ["user", "vip", "admin", "barberyass", "god"];
+const ProtectedRouteByRol = ({ rolesPermitidos }) => {
+  const [usuario, setUsuario] = useState(null);
+  const [rolUsuario, setRolUsuario] = useState("");
+  const [cargando, setCargando] = useState(true);
 
-const ProtectedRouteByRol = ({
-  children,
-  rolesPermitidos = [],
-  redirectTo = "/login",
-  mostrarMensaje = true,
-}) => {
-  const { usuario, rol, cargando } = useAuth();
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUsuario(user);
 
+        // Obtener rol desde Firestore
+        const ref = doc(db, "usuarios", user.uid);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          setRolUsuario(snap.data().rol);
+        }
+      } else {
+        setUsuario(null);
+        setRolUsuario("");
+      }
+      setCargando(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Mientras carga los datos, muestra un loader o nada
   if (cargando) {
-    return <div className="text-center p-8">Cargando permisos...</div>;
-  }
-
-  if (!usuario) return <Navigate to={redirectTo} />;
-
-  const tieneAcceso =
-    rolesPermitidos.includes(rol) ||
-    rolesPermitidos.some((r) => jerarquiaRoles.indexOf(rol) > jerarquiaRoles.indexOf(r));
-
-  if (!tieneAcceso) {
-    if (!mostrarMensaje) return <Navigate to={redirectTo} />;
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-600 text-center p-6">
-        <div>
-          <h2 className="text-2xl font-bold mb-4">⛔ Acceso Denegado</h2>
-          <p>Tu rol actual <strong>{rol}</strong> no tiene acceso.</p>
-        </div>
+      <div className="min-h-screen flex justify-center items-center text-lg">
+        Cargando...
       </div>
     );
   }
 
-  return children;
+  // Si no está logueado, redirigir al inicio
+  if (!usuario) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Si el rol no está permitido, redirigir al inicio
+  if (!rolesPermitidos.includes(rolUsuario)) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Si pasa todas las validaciones, mostrar la ruta protegida
+  return <Outlet />;
 };
 
 export default ProtectedRouteByRol;

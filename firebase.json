@@ -6,7 +6,7 @@
     "location": "nam5"
   },
   "hosting": {
-    "public": "dist",
+    "public": "dist", 
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -15,8 +15,10 @@
     "rewrites": [
       {
         "source": "**",
-        "destination": "/index.html"
+        "destination": "/index.html" 
       }
-    ]
+    ],
+    "cleanUrls": true,
+    "trailingSlash": false
   }
 }

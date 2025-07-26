@@ -1,4 +1,3 @@
-// 📁 src/App.jsx
 import React from "react";
 import { Routes, Route, Link } from "react-router-dom";
 
@@ -12,7 +11,7 @@ import ProtectedRouteByRol from "./components/ProtectedRouteByRol";
 
 // 🌐 Páginas públicas
 import Home from "./pages/Home";
-import Auth from "./pages/Auth"; // Unifica login y register
+import Auth from "./pages/Auth";
 import Galeria from "./pages/galeria";
 import RecuperarPassword from "./pages/RecuperarPassword";
 
@@ -20,13 +19,14 @@ import RecuperarPassword from "./pages/RecuperarPassword";
 import Perfil from "./pages/perfil";
 import Reservar from "./pages/reservar";
 import Confirmacion from "./pages/confirmacion";
+import Servicios from "./pages/Servicios";
 
 // 🛠️ Panel administrativo
 import AdminPanel from "./pages/adminpanel";
-import AdminGestionUsuarios from "./components/AdminGestionUsuarios";
-import AdminHorarios from "./components/AdminHorarios";
-import AdminReservasManual from "./components/AdminReservaManual";
-import AdminServicios from "./components/AdminServicios";
+import AdminGestionUsuarios from "./pages/AdminGestionUsuarios";
+import AdminHorarios from "./pages/AdminHorarios";
+import AdminReservaManual from "./pages/AdminReservaManual";
+import AdminServicios from "./pages/AdminServicios";
 
 // ❌ Página 404
 const NotFound = () => (
@@ -42,13 +42,16 @@ function App() {
     <Routes>
       {/* 🔓 Rutas públicas */}
       <Route path="/recuperar" element={<RecuperarPassword />} />
+
+      {/* Todas las rutas con Layout (Navbar y Footer) */}
       <Route element={<Layout />}>
+        {/* 🌐 Rutas públicas */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Auth />} />
-        <Route path="/register" element={<Auth />} />
         <Route path="/galeria" element={<Galeria />} />
+        <Route path="/servicios" element={<Servicios />} />
 
-        {/* 🔐 Rutas privadas (usuarios autenticados) */}
+        {/* 👤 Rutas privadas */}
         <Route
           path="/perfil"
           element={
@@ -73,22 +76,22 @@ function App() {
             </ProtectedRoute>
           }
         />
-      </Route>
 
-      {/* 🔐 Panel administrativo (según rol) */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRouteByRol rolesPermitidos={["admin", "barberyass", "god"]}>
-            <AdminLayout />
-          </ProtectedRouteByRol>
-        }
-      >
-        <Route index element={<AdminPanel />} />
-        <Route path="usuarios" element={<AdminGestionUsuarios />} />
-        <Route path="horarios" element={<AdminHorarios />} />
-        <Route path="manual" element={<AdminReservasManual />} />
-        <Route path="servicios" element={<AdminServicios />} />
+        {/* 🛠️ Panel administrativo con navbar/footer */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRouteByRol rolesPermitidos={["god", "admin"]}>
+              <AdminLayout />
+            </ProtectedRouteByRol>
+          }
+        >
+          <Route index element={<AdminPanel />} />
+          <Route path="usuarios" element={<AdminGestionUsuarios />} />
+          <Route path="horarios" element={<AdminHorarios />} />
+          <Route path="manual" element={<AdminReservaManual />} />
+          <Route path="servicios" element={<AdminServicios />} />
+        </Route>
       </Route>
 
       {/* ❌ Ruta no encontrada */}

@@ -1,58 +1,127 @@
-// ✅ galeria.jsx con SEO y mejoras visuales
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
 import logo from "../assets/galeria/logo.png";
 
-// Importar todas las imágenes automáticamente desde assets
+// Logos de marcas aliadas
+import marca1 from "../assets/galeria/Logo NOT BEER. marca1.jpg";
+import marca2 from "../assets/galeria/Logo MARMA2. marca2.jpg";
+import marca3 from "../assets/galeria/Logo 99. marca3.jpg";
+
+// Importar automáticamente todas las imágenes de servicios
 const imagenes = Object.values(
-  import.meta.glob('../assets/galeria/cortesyservicios*.jpeg', { eager: true, as: 'url' })
+  import.meta.glob("../assets/galeria/servicios*.jpg", {
+    eager: true,
+    query: "url",
+  })
 ).sort((a, b) => {
-  const numA = parseInt(a.match(/(\d+)\.jpeg$/)?.[1] || 0);
-  const numB = parseInt(b.match(/(\d+)\.jpeg$/)?.[1] || 0);
+  const numA = parseInt(a.match(/(\d+)\.jpg$/)?.[1] || 0);
+  const numB = parseInt(b.match(/(\d+)\.jpg$/)?.[1] || 0);
   return numA - numB;
 });
 
 export default function Galeria() {
+  const [indexActivo, setIndexActivo] = useState(null);
+
   return (
     <div className="min-h-screen p-6 bg-black text-white">
       <Helmet>
-        <title>Galería | BarberYass</title>
-        <meta name="description" content="Explora nuestra galería exclusiva de cortes, estilos y resultados en BarberYass. Donde el arte y la barbería se encuentran." />
-        <meta name="keywords" content="galería barbería, cortes modernos, BarberYass, estilos de cabello, servicios premium" />
-        <meta name="author" content="BarberYass" />
+        <title>Galería | Lugo Studio</title>
+        <meta
+          name="description"
+          content="Explora nuestra galería exclusiva de cortes, estilos y resultados de Lugo Studio. Estructuras profesionales y diseños únicos."
+        />
+        <meta
+          name="keywords"
+          content="galería barbería, Lugo Studio, cortes de cabello, barbería premium"
+        />
+        <meta name="author" content="Lugo Studio" />
       </Helmet>
 
+      {/* Logo */}
       <motion.img
         src={logo}
-        alt="Logo"
+        alt="Logo Lugo Studio"
         className="w-20 mx-auto mb-4"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       />
 
-      <h2 className="text-center text-3xl font-bold mb-2">✨ Galería de Servicios</h2>
+      <h2 className="text-center text-3xl font-bold mb-2">
+        ✨ Galería de Servicios
+      </h2>
       <p className="text-center text-gray-400 mb-10">
-        Momentos y resultados con estilo exclusivo BarberYass
+        Momentos y resultados con estilo exclusivo Lugo Studio
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {/* Grid de imágenes */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-12">
         {imagenes.map((src, index) => (
           <motion.div
             key={index}
-            className="rounded overflow-hidden shadow-lg bg-white"
+            className="rounded overflow-hidden shadow-lg bg-white cursor-pointer"
             whileHover={{ scale: 1.03 }}
             transition={{ duration: 0.3 }}
+            onClick={() => setIndexActivo(index)}
           >
             <img
               src={src}
               alt={`Servicio ${index + 1}`}
               className="w-full h-64 object-cover"
+              loading="lazy"
             />
           </motion.div>
         ))}
       </div>
+
+      {/* Marcas aliadas */}
+      <h3 className="text-center text-2xl font-semibold mb-6">
+        🤝 Marcas Aliadas
+      </h3>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <motion.img
+          src={marca1}
+          alt="Marca aliada NOT BEER"
+          className="bg-white rounded-lg p-3 object-contain"
+          whileHover={{ scale: 1.05 }}
+        />
+        <motion.img
+          src={marca2}
+          alt="Marca aliada MARMA2"
+          className="bg-white rounded-lg p-3 object-contain"
+          whileHover={{ scale: 1.05 }}
+        />
+        <motion.img
+          src={marca3}
+          alt="Marca aliada Logo 99"
+          className="bg-white rounded-lg p-3 object-contain"
+          whileHover={{ scale: 1.05 }}
+        />
+      </div>
+
+      {/* Modal de imagen ampliada */}
+      <AnimatePresence>
+        {indexActivo !== null && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIndexActivo(null)}
+          >
+            <motion.img
+              key={indexActivo}
+              src={imagenes[indexActivo]}
+              alt={`Imagen ${indexActivo + 1}`}
+              className="max-w-4xl max-h-[85vh] rounded-lg shadow-2xl"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

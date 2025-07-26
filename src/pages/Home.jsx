@@ -1,97 +1,174 @@
-// ✅ Home.jsx con SEO, imagenes locales, y mejor estructura
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useAuth } from '../context/AuthContext';
-import { db } from '../firebase/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { Helmet } from 'react-helmet';
+  import React, { useEffect, useState } from "react";
+  import { Link } from "react-router-dom";
+  import { motion } from "framer-motion";
+  import { Helmet } from "react-helmet";
 
-import logo from '../assets/galeria/logo2.png';
-import img1 from '../assets/galeria/cortesyservicios1.jpeg';
-import img2 from '../assets/galeria/cortesyservicios6.jpeg';
-import img3 from '../assets/galeria/cortesyservicios10.jpeg';
-import marca1 from '../assets/galeria/marca1.png';
-import marca2 from '../assets/galeria/marca2.png';
-import marca3 from '../assets/galeria/marca3.png';
-import fondo from '../assets/galeria/fondo-barberia.jpg';
+  // Fondo principal
+  import fondo from "../assets/galeria/fondo-barberia2.jpg";
 
-export default function Home() {
-  const { usuario } = useAuth();
-  const galeria = [img1, img2, img3];
-  const [promocionActiva, setPromocionActiva] = useState(false);
+  // Marcas Aliadas
+  import logoNotBeer from "../assets/galeria/Logo NOT BEER. marca1.jpg";
+  import logoMarma2 from "../assets/galeria/Logo MARMA2. marca2.jpg";
+  import logo99 from "../assets/galeria/Logo 99. marca3.jpg";
 
-  useEffect(() => {
-    const obtenerPromocion = async () => {
-      const ref = doc(db, "configuracion", "promociones");
-      const snap = await getDoc(ref);
-      if (snap.exists() && snap.data().activa) {
-        setPromocionActiva(true);
-      }
-    };
-    obtenerPromocion();
-  }, []);
+  // Servicios destacados
+  import servicio1 from "../assets/galeria/servicios (1).jpg";
+  import servicio18 from "../assets/galeria/servicios (18).jpg";
+  import servicio2 from "../assets/galeria/servicios (2).jpg";
+  import servicio6 from "../assets/galeria/servicios (6).jpg";
+  import servicio7 from "../assets/galeria/servicios (7).jpg";
+  import servicio17 from "../assets/galeria/servicios (17).jpg";
 
-  return (
-    <div className="min-h-screen bg-cover bg-center bg-fixed relative" style={{ backgroundImage: `url(${fondo})` }}>
-      <Helmet>
-        <title>BarberYass | Barbería Exclusiva en Lima</title>
-        <meta name="description" content="BarberYass: la barbería premium donde el estilo y la experiencia se encuentran. Reserva ahora tu cita con la mejor barbera." />
-        <meta name="keywords" content="barbería, barber, Lima, corte de cabello, BarberYass, Lugo Studio" />
-        <meta name="author" content="BarberYass" />
-      </Helmet>
+  // Icono WhatsApp
+  import wsIcon from "../assets/galeria/ws-white.svg";
 
-      <div className="absolute inset-0 bg-black bg-opacity-50 z-0" />
+  export default function Home() {
+    const [offsetY, setOffsetY] = useState(0);
 
-      <motion.main className="relative z-10 px-4 py-14 text-white text-center flex flex-col items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
-        <motion.img src={logo} alt="Logo" className="w-24 mb-6" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.6 }} />
+    const handleScroll = () => setOffsetY(window.scrollY);
 
-        <motion.h1 className="text-4xl md:text-5xl font-bold mb-4" initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3, duration: 0.6 }}>
-          Bienvenido a BarberYass
-        </motion.h1>
+    useEffect(() => {
+      window.addEventListener("scroll", handleScroll);
+      return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
-        <motion.p className="mb-8 max-w-md" initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5, duration: 0.6 }}>
-          La barbería premium donde el estilo y la experiencia se encuentran. Reserva y vive tu mejor corte.
-        </motion.p>
+    return (
+      <div className="bg-gray-50 relative">
+        <Helmet>
+          <title>Lugo Studio | Barbería Exclusiva</title>
+        </Helmet>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          {usuario ? (
-            <Link to="/reservar" className="bg-white text-black px-6 py-3 rounded-full hover:bg-gray-200 transition font-semibold">
-              Reservar cita
+        {/* HERO Principal con Parallax */}
+        <div
+          className="min-h-screen bg-fixed relative overflow-hidden"
+          style={{
+            backgroundImage: `url(${fondo})`,
+            backgroundPosition: `center ${20 - offsetY * 0.1}%`, // Efecto parallax
+            backgroundSize: "cover",
+            transform: `translateY(${offsetY * 0.1}px)`,
+          }}
+        >
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/70 z-0" />
+
+          {/* Contenido Hero */}
+          <motion.div
+            className="relative z-10 px-4 py-40 text-white text-center flex flex-col items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+          >
+            <motion.h1
+              className="text-4xl md:text-6xl font-bold mb-4"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+            >
+              Bienvenido a Lugo Studio
+            </motion.h1>
+
+            <motion.p
+              className="mb-8 max-w-xl text-lg md:text-xl"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+            >
+              Estructuras profesionales y seguras. Diseños únicos y exclusivos.
+            </motion.p>
+
+            <Link
+              to="/reservar"
+              className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-full text-white font-semibold mb-12 shadow-lg"
+            >
+              Reservar Cita
             </Link>
-          ) : (
-            <>
-              <Link to="/login" className="bg-white text-black px-6 py-3 rounded-full hover:bg-gray-200 transition font-semibold">Iniciar sesión</Link>
-              <Link to="/register" className="bg-gray-200 text-black px-6 py-3 rounded-full hover:bg-gray-300 transition font-semibold">Crear cuenta</Link>
-            </>
-          )}
+          </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl w-full px-2">
-          {galeria.map((img, i) => (
-            <div key={i} className="rounded-2xl overflow-hidden shadow-xl hover:scale-105 transition duration-300">
-              <img src={img} alt={`Servicio ${i + 1}`} className="object-cover w-full h-64 md:h-60" />
+        {/* SERVICIOS DESTACADOS */}
+        <section className="py-20 bg-gray-100 text-center">
+          <motion.h2
+            className="text-3xl font-bold mb-10 text-gray-800"
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            Nuestros Servicios
+          </motion.h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto px-6">
+            <div className="space-y-3">
+              <img src={servicio1} alt="Servicio 1" className="rounded-lg shadow-lg" />
+              <img src={servicio18} alt="Servicio 18" className="rounded-lg shadow-lg" />
             </div>
-          ))}
-        </div>
+            <div className="space-y-3">
+              <img src={servicio2} alt="Servicio 2" className="rounded-lg shadow-lg" />
+              <img src={servicio6} alt="Servicio 6" className="rounded-lg shadow-lg" />
+            </div>
+            <div className="space-y-3">
+              <img src={servicio7} alt="Servicio 7" className="rounded-lg shadow-lg" />
+              <img src={servicio17} alt="Servicio 17" className="rounded-lg shadow-lg" />
+            </div>
+          </div>
+        </section>
 
-        {promocionActiva && (
-          <section className="bg-yellow-100 text-yellow-900 p-4 mt-10 rounded shadow-lg max-w-xl mx-auto">
-            <h2 className="text-xl font-bold">🎉 Promoción Activa</h2>
-            <p>Aprovecha esta oferta exclusiva antes de que termine el mes. ¡Agenda hoy mismo!</p>
-          </section>
-        )}
-      </motion.main>
+        {/* MARCAS ALIADAS */}
+        <section className="py-16 bg-white">
+          <motion.h3
+            className="text-center text-xl font-semibold mb-8 text-gray-800"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+          >
+            Marcas que confían en nosotros
+          </motion.h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto px-6">
+            <motion.img
+              src={logoNotBeer}
+              alt="Logo NOT BEER"
+              className="bg-white rounded-lg p-3 shadow-md"
+              whileHover={{ scale: 1.05 }}
+            />
+            <motion.img
+              src={logoMarma2}
+              alt="Logo MARMA2"
+              className="bg-white rounded-lg p-3 shadow-md"
+              whileHover={{ scale: 1.05 }}
+            />
+            <motion.img
+              src={logo99}
+              alt="Logo 99"
+              className="bg-white rounded-lg p-3 shadow-md"
+              whileHover={{ scale: 1.05 }}
+            />
+          </div>
+        </section>
 
-      <section className="bg-white bg-opacity-95 text-gray-800 py-10 px-4 mt-16 rounded-3xl shadow-lg max-w-6xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">Marcas Aliadas</h2>
-        <p className="text-center text-sm text-gray-600 mb-8">Trabajamos con marcas profesionales del rubro para brindarte lo mejor.</p>
-        <div className="flex flex-wrap justify-center items-center gap-8">
-          <img src={marca1} alt="Marca 1" className="h-12 md:h-14 object-contain" />
-          <img src={marca2} alt="Marca 2" className="h-12 md:h-14 object-contain" />
-          <img src={marca3} alt="Marca 3" className="h-12 md:h-14 object-contain" />
+        {/* CTA Final */}
+        <section className="py-20 bg-purple-700 text-center text-white">
+          <h3 className="text-3xl font-bold mb-6">
+            Agenda tu cita hoy y vive la experiencia Lugo Studio
+          </h3>
+          <Link
+            to="/reservar"
+            className="bg-black hover:bg-gray-800 px-8 py-3 rounded-full font-semibold text-white"
+          >
+            Reservar Ahora
+          </Link>
+        </section>
+
+        {/* BOTÓN FLOTANTE WhatsApp */}
+        <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
+          <a
+            href="https://wa.me/51907011564?text=¡Hola!%20Quiero%20más%20información%20de%20Lugo%20Studio"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-green-500 p-3 rounded-full shadow-lg hover:scale-110 transition"
+          >
+            <img src={wsIcon} alt="WhatsApp" className="w-7" />
+          </a>
         </div>
-      </section>
-    </div>
-  );
-}
+      </div>
+    );
+  }
