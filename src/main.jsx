@@ -2,15 +2,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-
-// ✅ Estilos globales (TailwindCSS)
 import './index.css';
 
-// ✅ Contexto y enrutamiento
+// Contexto y enrutamiento
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 
-// ✅ Punto de entrada y renderizado principal
+// HelmetProvider
+import { HelmetProvider } from 'react-helmet-async';
+
 const rootElement = document.getElementById('root');
 
 if (!rootElement) {
@@ -22,7 +22,9 @@ if (!rootElement) {
     <React.StrictMode>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <HelmetProvider>
+            <App />
+          </HelmetProvider>
         </AuthProvider>
       </BrowserRouter>
     </React.StrictMode>

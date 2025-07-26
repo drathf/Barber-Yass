@@ -6,15 +6,13 @@ import { doc, getDoc } from "firebase/firestore";
 
 const ProtectedRouteByRol = ({ rolesPermitidos }) => {
   const [usuario, setUsuario] = useState(null);
-  const [rolUsuario, setRolUsuario] = useState("");
+  const [rolUsuario, setRolUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUsuario(user);
-
-        // Obtener rol desde Firestore
         try {
           const ref = doc(db, "usuarios", user.uid);
           const snap = await getDoc(ref);
@@ -33,12 +31,11 @@ const ProtectedRouteByRol = ({ rolesPermitidos }) => {
       }
       setCargando(false);
     });
-
     return () => unsubscribe();
   }, []);
 
-  // Mientras carga los datos, muestra un loader atractivo
-  if (cargando) {
+  // Loader
+  if (cargando || rolUsuario === null) {
     return (
       <div className="min-h-screen flex justify-center items-center text-lg text-purple-700">
         ⏳ Verificando acceso...
@@ -46,12 +43,12 @@ const ProtectedRouteByRol = ({ rolesPermitidos }) => {
     );
   }
 
-  // Si no está logueado, redirigir al inicio
+  // Usuario no logueado
   if (!usuario) {
     return <Navigate to="/" replace />;
   }
 
-  // Si el rol no está permitido, mostrar mensaje en pantalla
+  // Rol no permitido
   if (!rolesPermitidos.includes(rolUsuario)) {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center text-red-600 text-xl font-semibold">
@@ -69,7 +66,6 @@ const ProtectedRouteByRol = ({ rolesPermitidos }) => {
     );
   }
 
-  // Si pasa todas las validaciones, mostrar la ruta protegida
   return <Outlet />;
 };
 
