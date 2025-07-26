@@ -15,10 +15,17 @@ const ProtectedRouteByRol = ({ rolesPermitidos }) => {
         setUsuario(user);
 
         // Obtener rol desde Firestore
-        const ref = doc(db, "usuarios", user.uid);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          setRolUsuario(snap.data().rol);
+        try {
+          const ref = doc(db, "usuarios", user.uid);
+          const snap = await getDoc(ref);
+          if (snap.exists()) {
+            setRolUsuario(snap.data().rol || "");
+          } else {
+            setRolUsuario("");
+          }
+        } catch (error) {
+          console.error("Error obteniendo el rol del usuario:", error);
+          setRolUsuario("");
         }
       } else {
         setUsuario(null);
@@ -30,11 +37,11 @@ const ProtectedRouteByRol = ({ rolesPermitidos }) => {
     return () => unsubscribe();
   }, []);
 
-  // Mientras carga los datos, muestra un loader o nada
+  // Mientras carga los datos, muestra un loader atractivo
   if (cargando) {
     return (
-      <div className="min-h-screen flex justify-center items-center text-lg">
-        Cargando...
+      <div className="min-h-screen flex justify-center items-center text-lg text-purple-700">
+        ⏳ Verificando acceso...
       </div>
     );
   }
@@ -44,9 +51,22 @@ const ProtectedRouteByRol = ({ rolesPermitidos }) => {
     return <Navigate to="/" replace />;
   }
 
-  // Si el rol no está permitido, redirigir al inicio
+  // Si el rol no está permitido, mostrar mensaje en pantalla
   if (!rolesPermitidos.includes(rolUsuario)) {
-    return <Navigate to="/" replace />;
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center text-red-600 text-xl font-semibold">
+        <span className="mb-2">🚫 Acceso denegado</span>
+        <p className="text-base text-gray-700">
+          No tienes permisos para acceder a esta sección.
+        </p>
+        <a
+          href="/"
+          className="mt-4 text-white bg-purple-600 hover:bg-purple-700 px-5 py-2 rounded-lg transition"
+        >
+          Volver al inicio
+        </a>
+      </div>
+    );
   }
 
   // Si pasa todas las validaciones, mostrar la ruta protegida
