@@ -1,4 +1,3 @@
-// 📁 src/pages/Perfil.jsx
 import React, { useEffect, useState } from "react";
 import { db, auth } from "../firebase/firebase";
 import {
@@ -9,8 +8,13 @@ import {
   updateDoc,
   doc,
   getDoc,
+  setDoc,
 } from "firebase/firestore";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
 import logo from "../assets/galeria/logo.png";
@@ -43,6 +47,15 @@ export default function Perfil() {
   const [credenciales, setCredenciales] = useState({ email: "", password: "" });
   const [procesando, setProcesando] = useState(false);
 
+  // Estado formulario para registro (solo admin/god/barberyass)
+  const [nuevoUsuario, setNuevoUsuario] = useState({
+    nombre: "",
+    email: "",
+    password: "",
+    rol: "user",
+  });
+  const [registrando, setRegistrando] = useState(false);
+
   // 📷 Cargar foto de perfil del usuario
   useEffect(() => {
     const cargarDatosUsuario = async () => {
@@ -64,7 +77,6 @@ export default function Perfil() {
 
     const cargarDatos = async () => {
       try {
-        // Clientes normales
         if (rol === "user" || rol === "vip") {
           const q = query(
             collection(db, "reservas"),
@@ -74,7 +86,6 @@ export default function Perfil() {
           setReservas(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
         }
 
-        // Admins o roles altos
         if (["admin", "barberyass", "god"].includes(rol)) {
           const reservasSnap = await getDocs(collection(db, "reservas"));
           const usuariosSnap = await getDocs(collection(db, "usuarios"));
@@ -180,7 +191,7 @@ export default function Perfil() {
     docPDF.save(`Reporte_BarberYass_${Date.now()}.pdf`);
   };
 
-  // 🔹 Iniciar sesión manual
+  // 🔹 Iniciar sesión manual (con validación en Firestore y Auth)
   const iniciarSesion = async (e) => {
     e.preventDefault();
     if (!credenciales.email || !credenciales.password) {
@@ -190,15 +201,37 @@ export default function Perfil() {
 
     try {
       setProcesando(true);
+
+      // Validar si existe en Firestore
+      const q = query(
+        collection(db, "usuarios"),
+        where("email", "==", credenciales.email.trim().toLowerCase())
+      );
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        setMensaje("❌ Usuario no encontrado en Firestore");
+        setProcesando(false);
+        return;
+      }
+
+      // Intentar login en Auth
       await signInWithEmailAndPassword(
         auth,
         credenciales.email.trim().toLowerCase(),
         credenciales.password
       );
+
       setMensaje("✅ Bienvenido");
     } catch (error) {
       console.error("❌ Error login:", error.code, error.message);
-      setMensaje("❌ Credenciales incorrectas");
+      if (error.code === "auth/user-not-found") {
+        setMensaje("⚠️ Usuario no existe en Firebase Auth");
+      } else if (error.code === "auth/wrong-password") {
+        setMensaje("❌ Contraseña incorrecta");
+      } else {
+        setMensaje("⚠️ Error al iniciar sesión");
+      }
     } finally {
       setProcesando(false);
     }
@@ -207,6 +240,46 @@ export default function Perfil() {
   // 🔹 Cerrar sesión
   const cerrarSesion = async () => {
     await signOut(auth);
+  };
+
+  // 🔹 Registrar usuario en Auth + Firestore
+  const registrarUsuario = async (e) => {
+    e.preventDefault();
+    if (!nuevoUsuario.email || !nuevoUsuario.password || !nuevoUsuario.nombre) {
+      setMensaje("⚠️ Completa todos los campos del nuevo usuario");
+      return;
+    }
+
+    try {
+      setRegistrando(true);
+
+      // Crear en Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        nuevoUsuario.email.trim().toLowerCase(),
+        nuevoUsuario.password
+      );
+
+      const user = userCredential.user;
+
+      // Guardar en Firestore
+      await setDoc(doc(db, "usuarios", user.uid), {
+        uid: user.uid,
+        email: nuevoUsuario.email.trim().toLowerCase(),
+        nombre: nuevoUsuario.nombre,
+        rol: nuevoUsuario.rol,
+        requierePago: false,
+        creado: new Date().toISOString(),
+      });
+
+      setMensaje("✅ Usuario registrado correctamente");
+      setNuevoUsuario({ nombre: "", email: "", password: "", rol: "user" });
+    } catch (error) {
+      console.error("❌ Error registrando usuario:", error);
+      setMensaje("⚠️ No se pudo registrar el usuario");
+    } finally {
+      setRegistrando(false);
+    }
   };
 
   // Loader mientras carga
@@ -265,7 +338,7 @@ export default function Perfil() {
     );
   }
 
-  // Si está logueado -> Mostrar perfil
+  // Si está logueado -> Mostrar perfil y dashboard
   return (
     <div className="min-h-screen p-6">
       {/* Header */}
@@ -390,6 +463,62 @@ export default function Perfil() {
                 Exportar PDF
               </button>
             </div>
+          </div>
+
+          {/* Formulario registrar usuario */}
+          <div className="bg-gray-200 p-6 rounded mb-6">
+            <h4 className="text-xl font-semibold mb-4">➕ Registrar nuevo usuario</h4>
+            <form
+              onSubmit={registrarUsuario}
+              className="grid grid-cols-1 md:grid-cols-4 gap-4"
+            >
+              <input
+                type="text"
+                placeholder="Nombre"
+                className="p-2 border rounded"
+                value={nuevoUsuario.nombre}
+                onChange={(e) =>
+                  setNuevoUsuario({ ...nuevoUsuario, nombre: e.target.value })
+                }
+              />
+              <input
+                type="email"
+                placeholder="Correo"
+                className="p-2 border rounded"
+                value={nuevoUsuario.email}
+                onChange={(e) =>
+                  setNuevoUsuario({ ...nuevoUsuario, email: e.target.value })
+                }
+              />
+              <input
+                type="password"
+                placeholder="Contraseña"
+                className="p-2 border rounded"
+                value={nuevoUsuario.password}
+                onChange={(e) =>
+                  setNuevoUsuario({ ...nuevoUsuario, password: e.target.value })
+                }
+              />
+              <select
+                className="p-2 border rounded"
+                value={nuevoUsuario.rol}
+                onChange={(e) =>
+                  setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value })
+                }
+              >
+                <option value="user">User</option>
+                <option value="vip">VIP</option>
+                <option value="admin">Admin</option>
+                <option value="barberyass">Barberyass</option>
+              </select>
+              <button
+                type="submit"
+                disabled={registrando}
+                className="bg-black text-white px-4 py-2 rounded col-span-1 md:col-span-4"
+              >
+                {registrando ? "Registrando..." : "Registrar Usuario"}
+              </button>
+            </form>
           </div>
         </div>
       )}
