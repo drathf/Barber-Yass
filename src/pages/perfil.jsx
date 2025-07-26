@@ -1,6 +1,6 @@
-// src/pages/perfil.jsx
+// src/pages/Perfil.jsx
 import React, { useEffect, useState } from "react";
-import { db } from "../firebase/firebase";
+import { db, auth } from "../firebase/firebase";
 import {
   collection,
   getDocs,
@@ -9,6 +9,7 @@ import {
   updateDoc,
   doc,
 } from "firebase/firestore";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
 import logo from "../assets/galeria/logo.png";
@@ -17,7 +18,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 
 export default function Perfil() {
-  const { usuario, rol } = useAuth();
+  const { usuario, rol, cargando } = useAuth();
   const [reservas, setReservas] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [mensaje, setMensaje] = useState("");
@@ -34,19 +35,23 @@ export default function Perfil() {
   const [filtroFechaInicio, setFiltroFechaInicio] = useState("");
   const [filtroFechaFin, setFiltroFechaFin] = useState("");
 
+  // Login local
+  const [credenciales, setCredenciales] = useState({ email: "", password: "" });
+  const [procesando, setProcesando] = useState(false);
+
   useEffect(() => {
     if (!usuario) return;
 
     const cargarDatos = async () => {
-      // Usuarios normales
       if (rol === "user" || rol === "vip") {
+        // Solo sus reservas
         const q = query(collection(db, "reservas"), where("uid", "==", usuario.uid));
         const snap = await getDocs(q);
         setReservas(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       }
 
-      // Admin/God/Barberyass dashboard
       if (rol === "admin" || rol === "barberyass" || rol === "god") {
+        // Dashboard
         const reservasSnap = await getDocs(collection(db, "reservas"));
         const usuariosSnap = await getDocs(collection(db, "usuarios"));
 
@@ -80,7 +85,7 @@ export default function Perfil() {
     });
   };
 
-  // Confirmar pago user (👤)
+  // Confirmar pago user
   const activarPago = async () => {
     if (rol !== "user") {
       setMensaje("⚠️ Solo los usuarios 👤 pueden cambiar su estado de pago");
@@ -90,7 +95,7 @@ export default function Perfil() {
     setMensaje("✅ Tu estado de pago fue actualizado. Ahora puedes reservar.");
   };
 
-  // Filtrar reservas dashboard
+  // Filtrar reservas
   const reservasFiltradas = reservas.filter((r) => {
     const fechaR = new Date(r.fecha);
     const fechaInicio = filtroFechaInicio ? new Date(filtroFechaInicio) : null;
@@ -144,30 +149,89 @@ export default function Perfil() {
     docPDF.save(`Reporte_BarberYass_${Date.now()}.pdf`);
   };
 
-  // Sin sesión
+  // Login y logout
+  const iniciarSesion = async (e) => {
+    e.preventDefault();
+    if (!credenciales.email || !credenciales.password) {
+      setMensaje("⚠️ Ingresa tu email y contraseña");
+      return;
+    }
+
+    try {
+      setProcesando(true);
+      await signInWithEmailAndPassword(auth, credenciales.email, credenciales.password);
+      setMensaje("✅ Bienvenido");
+    } catch (error) {
+      console.error(error);
+      setMensaje("❌ Credenciales incorrectas");
+    } finally {
+      setProcesando(false);
+    }
+  };
+
+  const cerrarSesion = async () => {
+    await signOut(auth);
+  };
+
+  // Loader
+  if (cargando) {
+    return <div className="min-h-screen flex items-center justify-center">Cargando...</div>;
+  }
+
+  // Si no está logueado -> Login
   if (!usuario) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Debes iniciar sesión para ver tu perfil</p>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6">
+        <motion.img src={logo} alt="Logo" className="w-24 mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} />
+        <h2 className="text-xl font-bold mb-4">🔐 Inicia sesión</h2>
+        {mensaje && <p className="mb-3 text-center text-red-600">{mensaje}</p>}
+
+        <form onSubmit={iniciarSesion} className="w-full max-w-sm space-y-4">
+          <input
+            type="email"
+            placeholder="Correo electrónico"
+            className="w-full border p-2 rounded"
+            value={credenciales.email}
+            onChange={(e) => setCredenciales({ ...credenciales, email: e.target.value })}
+          />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            className="w-full border p-2 rounded"
+            value={credenciales.password}
+            onChange={(e) => setCredenciales({ ...credenciales, password: e.target.value })}
+          />
+          <button
+            type="submit"
+            disabled={procesando}
+            className={`w-full py-2 rounded text-white ${procesando ? "bg-gray-400" : "bg-black hover:bg-gray-800"}`}
+          >
+            {procesando ? "Conectando..." : "Iniciar sesión"}
+          </button>
+        </form>
       </div>
     );
   }
 
+  // Si está logueado -> Perfil
   return (
     <div className="min-h-screen p-6">
-      <motion.img
-        src={logo}
-        alt="Logo"
-        className="w-20 mb-4 mx-auto"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      />
+      <div className="flex justify-between items-center mb-6">
+        <motion.img src={logo} alt="Logo" className="w-20" initial={{ opacity: 0 }} animate={{ opacity: 1 }} />
+        <button
+          onClick={cerrarSesion}
+          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+        >
+          Cerrar sesión
+        </button>
+      </div>
+
       <h2 className="text-2xl font-bold text-center mb-4">👤 Perfil</h2>
       {mensaje && <p className="text-center mb-3">{mensaje}</p>}
 
       {/* Datos usuario */}
       <div className="max-w-md mx-auto bg-gray-100 p-4 rounded shadow mb-6">
-        <p><strong>Nombre:</strong> {usuario.displayName}</p>
+        <p><strong>Nombre:</strong> {usuario.displayName || "No definido"}</p>
         <p><strong>Email:</strong> {usuario.email}</p>
         <p><strong>Rol:</strong> {rol}</p>
       </div>
@@ -184,7 +248,7 @@ export default function Perfil() {
         </div>
       )}
 
-      {/* Dashboard para roles god/admin/barberyass */}
+      {/* Dashboard roles admin/god/barberyass */}
       {(rol === "admin" || rol === "barberyass" || rol === "god") && (
         <div className="max-w-6xl mx-auto mb-10">
           <h3 className="text-2xl font-semibold mb-6 text-center">📊 Dashboard BarberYass</h3>

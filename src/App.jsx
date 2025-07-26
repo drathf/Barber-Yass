@@ -11,15 +11,14 @@ import ProtectedRouteByRol from "./components/ProtectedRouteByRol";
 
 // 🌐 Páginas públicas
 import Home from "./pages/Home";
-import Auth from "./pages/Auth";
 import Galeria from "./pages/galeria";
 import RecuperarPassword from "./pages/RecuperarPassword";
+import Servicios from "./pages/Servicios";
 
-// 👤 Páginas privadas (usuarios autenticados)
+// 👤 Perfil (login + perfil)
 import Perfil from "./pages/perfil";
 import Reservar from "./pages/reservar";
 import Confirmacion from "./pages/confirmacion";
-import Servicios from "./pages/Servicios";
 
 // 🛠️ Panel administrativo
 import AdminPanel from "./pages/adminpanel";
@@ -33,7 +32,9 @@ const NotFound = () => (
   <div className="min-h-screen flex flex-col justify-center items-center text-center p-10">
     <h1 className="text-5xl font-bold text-red-600 mb-2">404</h1>
     <p className="text-lg text-gray-700 mb-4">Página no encontrada</p>
-    <Link to="/" className="text-blue-600 underline">Volver al inicio</Link>
+    <Link to="/" className="text-blue-600 underline">
+      Volver al inicio
+    </Link>
   </div>
 );
 
@@ -43,23 +44,15 @@ function App() {
       {/* 🔓 Rutas públicas */}
       <Route path="/recuperar" element={<RecuperarPassword />} />
 
-      {/* Todas las rutas con Layout (Navbar y Footer) */}
+      {/* Rutas con Layout (Navbar + Footer) */}
       <Route element={<Layout />}>
-        {/* 🌐 Rutas públicas */}
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Auth />} />
         <Route path="/galeria" element={<Galeria />} />
         <Route path="/servicios" element={<Servicios />} />
 
-        {/* 👤 Rutas privadas */}
-        <Route
-          path="/perfil"
-          element={
-            <ProtectedRoute>
-              <Perfil />
-            </ProtectedRoute>
-          }
-        />
+        {/* Perfil centraliza el login */}
+        <Route path="/perfil" element={<Perfil />} />
+
         <Route
           path="/reservar"
           element={
@@ -77,11 +70,11 @@ function App() {
           }
         />
 
-        {/* 🛠️ Panel administrativo con navbar/footer */}
+        {/* Panel admin */}
         <Route
           path="/admin"
           element={
-            <ProtectedRouteByRol rolesPermitidos={["god", "admin"]}>
+            <ProtectedRouteByRol rolesPermitidos={["god", "admin", "barberyass"]}>
               <AdminLayout />
             </ProtectedRouteByRol>
           }

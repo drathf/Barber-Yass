@@ -9,13 +9,13 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/firebase";
-import { useAuth } from "../context/AuthContext"; // ✅ Import correcto
+import { useAuth } from "../context/AuthContext"; // ✅ Validación de login y roles
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import * as XLSX from "xlsx";
 
 const AdminHorarios = () => {
-  const { usuario } = useAuth();
+  const { usuario, cargando } = useAuth();
   const [rol, setRol] = useState(null);
 
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
@@ -54,16 +54,14 @@ const AdminHorarios = () => {
     });
   };
 
-  // Roles del usuario
+  // Obtener rol de usuario
   useEffect(() => {
-    const obtenerRol = async () => {
-      if (usuario) {
-        const ref = doc(db, "usuarios", usuario.uid);
-        const snap = await getDoc(ref);
+    if (usuario) {
+      const ref = doc(db, "usuarios", usuario.uid);
+      getDoc(ref).then((snap) => {
         if (snap.exists()) setRol(snap.data().rol);
-      }
-    };
-    obtenerRol();
+      });
+    }
   }, [usuario]);
 
   // Auto-actualización de la semana cada lunes 00:00
@@ -124,9 +122,15 @@ const AdminHorarios = () => {
     return Array.from({ length: 9 }, (_, i) => `${i + 11}:00`);
   };
 
+  // Validación de permisos
+  const tienePermiso = () => rol === "god" || rol === "admin" || rol === "barberyass";
+
   // Acciones de horarios
   const crearHorario = async (hora) => {
-    if (rol !== "god" && rol !== "admin") return;
+    if (!tienePermiso()) {
+      alert("⛔ No tienes permisos para crear horarios");
+      return;
+    }
     const fechaFormato = formatearFecha(fechaSeleccionada);
     const ref = doc(collection(db, "horarios"));
     await setDoc(ref, {
@@ -139,14 +143,20 @@ const AdminHorarios = () => {
   };
 
   const cambiarDisponibilidad = async (horario) => {
-    if (rol !== "god" && rol !== "admin") return;
+    if (!tienePermiso()) {
+      alert("⛔ No tienes permisos para habilitar/deshabilitar horarios");
+      return;
+    }
     await updateDoc(doc(db, "horarios", horario.id), {
       disponible: !horario.disponible,
     });
   };
 
   const liberarHorarioReservado = async (horario) => {
-    if (rol !== "god" && rol !== "admin") return;
+    if (!tienePermiso()) {
+      alert("⛔ No tienes permisos para liberar horarios");
+      return;
+    }
     if (!window.confirm("¿Liberar este horario reservado?")) return;
     if (horario.reservaId) {
       await deleteDoc(doc(db, "reservas", horario.reservaId));
@@ -160,6 +170,10 @@ const AdminHorarios = () => {
 
   // Acciones de reservas
   const eliminarReserva = async (reserva) => {
+    if (!tienePermiso()) {
+      alert("⛔ No tienes permisos para eliminar reservas");
+      return;
+    }
     if (!window.confirm("¿Eliminar esta reserva?")) return;
     await deleteDoc(doc(db, "reservas", reserva.id));
 
@@ -174,6 +188,10 @@ const AdminHorarios = () => {
   };
 
   const marcarCulminado = async (reserva) => {
+    if (!tienePermiso()) {
+      alert("⛔ No tienes permisos para marcar reservas");
+      return;
+    }
     if (!window.confirm("¿Marcar esta reserva como culminada?")) return;
     await updateDoc(doc(db, "reservas", reserva.id), {
       estado: "culminada",
@@ -208,6 +226,19 @@ const AdminHorarios = () => {
   );
 
   const horariosBase = generarHorariosBase();
+
+  // 🛑 Validación de login y roles
+  if (cargando) {
+    return <div className="p-10 text-center">Cargando...</div>;
+  }
+
+  if (!usuario) {
+    return <div className="p-10 text-center text-red-600">Debes iniciar sesión</div>;
+  }
+
+  if (!tienePermiso()) {
+    return <div className="p-10 text-center text-red-600">⛔ Acceso denegado</div>;
+  }
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
