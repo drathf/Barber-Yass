@@ -43,7 +43,7 @@ export default function Home() {
 
       {/* HERO Principal con Parallax */}
       <div
-        className="min-h-screen bg-fixed relative overflow-hidden"
+        className="min-h-screen bg-fixed relative overflow-hidden z-0"  // 👈 Aseguramos z-0
         style={{
           backgroundImage: `url(${fondo})`,
           backgroundPosition: `center ${20 - offsetY * 0.1}%`,
@@ -89,7 +89,7 @@ export default function Home() {
       </div>
 
       {/* SERVICIOS DESTACADOS */}
-      <section className="py-20 bg-gray-100 text-center">
+      <section className="py-20 bg-gray-100 text-center relative z-10">
         <motion.h2
           className="text-3xl font-bold mb-10 text-gray-800"
           initial={{ opacity: 0, y: -20 }}
@@ -118,7 +118,7 @@ export default function Home() {
       </section>
 
       {/* MARCAS ALIADAS */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white relative z-10">
         <motion.h3
           className="text-center text-xl font-semibold mb-8 text-gray-800"
           initial={{ opacity: 0 }}
@@ -141,7 +141,7 @@ export default function Home() {
       </section>
 
       {/* CTA Final */}
-      <section className="py-20 bg-purple-700 text-center text-white relative overflow-hidden">
+      <section className="py-20 bg-purple-700 text-center text-white relative overflow-hidden z-10">
         <div className="relative z-10">
           <h3 className="text-3xl font-bold mb-6 drop-shadow-lg">
             Agenda tu cita hoy y vive la experiencia Lugo Studio
