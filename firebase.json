@@ -1,12 +1,12 @@
 {
   "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json",
     "database": "(default)",
-    "location": "nam5"
+    "location": "nam5",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "hosting": {
-    "public": "dist", 
+    "public": "dist",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -15,10 +15,8 @@
     "rewrites": [
       {
         "source": "**",
-        "destination": "/index.html" 
+        "destination": "/index.html"
       }
-    ],
-    "cleanUrls": true,
-    "trailingSlash": false
+    ]
   }
 }
