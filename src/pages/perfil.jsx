@@ -9,13 +9,8 @@ import {
   updateDoc,
   doc,
   getDoc,
-  setDoc,
 } from "firebase/firestore";
-import {
-  signInWithEmailAndPassword,
-  signOut,
-  createUserWithEmailAndPassword,
-} from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
 import logo from "../assets/galeria/logo.png";
@@ -29,6 +24,8 @@ export default function Perfil() {
   const [usuarios, setUsuarios] = useState([]);
   const [mensaje, setMensaje] = useState("");
   const [fotoPerfil, setFotoPerfil] = useState("");
+
+  // Estadísticas para admin
   const [stats, setStats] = useState({
     totalReservas: 0,
     reservasActivas: 0,
@@ -37,16 +34,16 @@ export default function Perfil() {
     ganancias: 0,
   });
 
-  // Filtros
+  // Filtros de búsqueda
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroFechaInicio, setFiltroFechaInicio] = useState("");
   const [filtroFechaFin, setFiltroFechaFin] = useState("");
 
-  // Login local
+  // Estado login manual
   const [credenciales, setCredenciales] = useState({ email: "", password: "" });
   const [procesando, setProcesando] = useState(false);
 
-  // 🔹 Cargar foto de perfil
+  // 📷 Cargar foto de perfil del usuario
   useEffect(() => {
     const cargarDatosUsuario = async () => {
       if (usuario) {
@@ -63,10 +60,11 @@ export default function Perfil() {
 
   // 🔹 Cargar datos de reservas y dashboard
   useEffect(() => {
-    if (!usuario || !rol) return;
+    if (!usuario) return;
 
     const cargarDatos = async () => {
       try {
+        // Clientes normales
         if (rol === "user" || rol === "vip") {
           const q = query(
             collection(db, "reservas"),
@@ -76,6 +74,7 @@ export default function Perfil() {
           setReservas(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
         }
 
+        // Admins o roles altos
         if (["admin", "barberyass", "god"].includes(rol)) {
           const reservasSnap = await getDocs(collection(db, "reservas"));
           const usuariosSnap = await getDocs(collection(db, "usuarios"));
@@ -85,22 +84,20 @@ export default function Perfil() {
             ...d.data(),
           }));
           setReservas(reservasData);
-          setUsuarios(
-            usuariosSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
-          );
+          setUsuarios(usuariosSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
 
           calcularStats(reservasData);
         }
       } catch (error) {
         console.error("❌ Error cargando datos:", error);
-        setMensaje("⚠️ Error cargando datos. Revisa Firestore.");
+        setMensaje("⚠️ Error cargando datos desde Firestore.");
       }
     };
 
     cargarDatos();
   }, [usuario, rol]);
 
-  // 🔹 Estadísticas
+  // 🔹 Calcular estadísticas
   const calcularStats = (data) => {
     const total = data.length;
     const activas = data.filter((r) => r.estado === "activa").length;
@@ -115,11 +112,11 @@ export default function Perfil() {
       reservasActivas: activas,
       reservasAtendidas: atendidas,
       reservasCanceladas: canceladas,
-      ganancias: ganancias,
+      ganancias,
     });
   };
 
-  // 🔹 Confirmar pago (solo user)
+  // 🔹 Confirmar pago (solo usuarios normales)
   const activarPago = async () => {
     if (rol !== "user") {
       setMensaje("⚠️ Solo los usuarios pueden confirmar su pago");
@@ -127,55 +124,6 @@ export default function Perfil() {
     }
     await updateDoc(doc(db, "usuarios", usuario.uid), { requierePago: false });
     setMensaje("✅ Estado de pago actualizado correctamente.");
-  };
-
-  // 🔹 Iniciar sesión o crear usuario si no existe
-  const iniciarSesion = async (e) => {
-    e.preventDefault();
-    if (!credenciales.email || !credenciales.password) {
-      setMensaje("⚠️ Ingresa tu email y contraseña");
-      return;
-    }
-
-    try {
-      setProcesando(true);
-      // Intentar login
-      const userCred = await signInWithEmailAndPassword(
-        auth,
-        credenciales.email.trim().toLowerCase(),
-        credenciales.password
-      );
-
-      // Crear documento en Firestore si no existe
-      const ref = doc(db, "usuarios", userCred.user.uid);
-      const snap = await getDoc(ref);
-      if (!snap.exists()) {
-        await setDoc(ref, {
-          email: userCred.user.email,
-          rol: "user",
-          requierePago: false,
-          creado: new Date().toISOString(),
-        });
-      }
-
-      setMensaje("✅ Bienvenido");
-    } catch (error) {
-      if (error.code === "auth/user-not-found") {
-        setMensaje("⚠️ Usuario no encontrado. Debes registrarte primero.");
-      } else if (error.code === "auth/wrong-password") {
-        setMensaje("❌ Contraseña incorrecta");
-      } else {
-        console.error("❌ Error login:", error.code, error.message);
-        setMensaje("❌ Credenciales incorrectas");
-      }
-    } finally {
-      setProcesando(false);
-    }
-  };
-
-  // 🔹 Cerrar sesión
-  const cerrarSesion = async () => {
-    await signOut(auth);
   };
 
   // 🔹 Filtrar reservas
@@ -232,7 +180,36 @@ export default function Perfil() {
     docPDF.save(`Reporte_BarberYass_${Date.now()}.pdf`);
   };
 
-  // Loader
+  // 🔹 Iniciar sesión manual
+  const iniciarSesion = async (e) => {
+    e.preventDefault();
+    if (!credenciales.email || !credenciales.password) {
+      setMensaje("⚠️ Ingresa tu email y contraseña");
+      return;
+    }
+
+    try {
+      setProcesando(true);
+      await signInWithEmailAndPassword(
+        auth,
+        credenciales.email.trim().toLowerCase(),
+        credenciales.password
+      );
+      setMensaje("✅ Bienvenido");
+    } catch (error) {
+      console.error("❌ Error login:", error.code, error.message);
+      setMensaje("❌ Credenciales incorrectas");
+    } finally {
+      setProcesando(false);
+    }
+  };
+
+  // 🔹 Cerrar sesión
+  const cerrarSesion = async () => {
+    await signOut(auth);
+  };
+
+  // Loader mientras carga
   if (cargando) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -241,7 +218,7 @@ export default function Perfil() {
     );
   }
 
-  // 🔹 Si no está logueado -> Login
+  // Si no está logueado -> Mostrar login
   if (!usuario) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6">
@@ -288,9 +265,10 @@ export default function Perfil() {
     );
   }
 
-  // 🔹 Si está logueado -> Perfil
+  // Si está logueado -> Mostrar perfil
   return (
     <div className="min-h-screen p-6">
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <motion.img
           src={logo}
@@ -313,7 +291,7 @@ export default function Perfil() {
       {/* Datos usuario */}
       <div className="max-w-md mx-auto bg-gray-100 p-6 rounded shadow mb-6 text-center">
         <img
-          src={fotoPerfil || "https://ui-avatars.com/api/?name=" + usuario.email}
+          src={fotoPerfil || `https://ui-avatars.com/api/?name=${usuario.email}`}
           alt="Foto de perfil"
           className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-2 border-purple-400"
         />
@@ -326,7 +304,19 @@ export default function Perfil() {
         </p>
       </div>
 
-      {/* Dashboard */}
+      {/* Pago para user */}
+      {rol === "user" && (
+        <div className="text-center mb-6">
+          <button
+            onClick={activarPago}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            Confirmar Pago 50%
+          </button>
+        </div>
+      )}
+
+      {/* Dashboard Admin */}
       {["admin", "barberyass", "god"].includes(rol) && (
         <div className="max-w-6xl mx-auto mb-10">
           <h3 className="text-2xl font-semibold mb-6 text-center">
@@ -356,6 +346,49 @@ export default function Perfil() {
                 S/. {stats.ganancias.toFixed(2)}
               </p>
               <p>Ganancias</p>
+            </div>
+          </div>
+
+          {/* Filtros */}
+          <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={filtroFechaInicio}
+                onChange={(e) => setFiltroFechaInicio(e.target.value)}
+                className="border p-2 rounded"
+              />
+              <input
+                type="date"
+                value={filtroFechaFin}
+                onChange={(e) => setFiltroFechaFin(e.target.value)}
+                className="border p-2 rounded"
+              />
+              <select
+                value={filtroEstado}
+                onChange={(e) => setFiltroEstado(e.target.value)}
+                className="border p-2 rounded"
+              >
+                <option value="">Todos</option>
+                <option value="activa">Activa</option>
+                <option value="atendido">Atendida</option>
+                <option value="cancelada">Cancelada</option>
+              </select>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={exportarExcel}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                Exportar Excel
+              </button>
+              <button
+                onClick={exportarPDF}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Exportar PDF
+              </button>
             </div>
           </div>
         </div>
