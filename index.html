@@ -7,25 +7,32 @@
     <!-- Icono en pestaña -->
     <link rel="icon" href="/logo.png" type="image/png" />
 
-    <!-- 🔥 Mejora de rendimiento: conexiones anticipadas -->
+    <!-- Preconexiones para mejorar rendimiento -->
     <link rel="preconnect" href="https://firestore.googleapis.com" />
     <link rel="preconnect" href="https://firebase.googleapis.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
     <!-- Fuente personalizada -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
 
     <title>Barber Yass</title>
   </head>
   <body class="bg-gray-50 text-gray-800 antialiased">
-    <!-- Splash opcional con logo visible -->
+    <!-- Root donde React montará la app -->
     <div id="root">
-      <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+      <!-- Splash opcional visible hasta que React cargue -->
+      <div
+        style="display: flex; justify-content: center; align-items: center; height: 100vh;"
+      >
         <img src="/logo.png" alt="Logo BarberYass" style="width: 100px;" />
       </div>
     </div>
 
+    <!-- Archivo principal generado por Vite -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

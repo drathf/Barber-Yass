@@ -15,7 +15,7 @@ const Navbar = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [esTransparente, setEsTransparente] = useState(true);
 
-  // Transparencia al hacer scroll solo en home
+  // Cambiar transparencia del navbar solo en home
   useEffect(() => {
     const manejarScroll = () => {
       setEsTransparente(location.pathname === "/" && window.scrollY <= 50);
@@ -30,12 +30,18 @@ const Navbar = () => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUsuario(user);
-        const ref = doc(db, "usuarios", user.uid);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          const data = snap.data();
-          setNombreUsuario(data.nombre || user.email);
-          setRolUsuario(data.rol || "");
+        try {
+          const ref = doc(db, "usuarios", user.uid);
+          const snap = await getDoc(ref);
+          if (snap.exists()) {
+            const data = snap.data();
+            setNombreUsuario(data.nombre || user.email);
+            setRolUsuario(data.rol || "");
+          } else {
+            setRolUsuario("");
+          }
+        } catch (error) {
+          console.error("Error cargando usuario:", error);
         }
       } else {
         setUsuario(null);
@@ -52,6 +58,7 @@ const Navbar = () => {
     navigate("/");
   };
 
+  // Items del navbar
   const navItems = [
     { path: "/", label: "Inicio" },
     { path: "/galeria", label: "Galería" },
@@ -125,7 +132,7 @@ const Navbar = () => {
             </Link>
           )}
 
-          {/* Usuario */}
+          {/* Usuario o login */}
           {usuario ? (
             <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3">
               <span className="text-xs md:text-sm truncate max-w-[150px] md:max-w-none">

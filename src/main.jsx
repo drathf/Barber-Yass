@@ -21,24 +21,22 @@ const Loader = () => (
 const rootElement = document.getElementById("root");
 
 if (!rootElement) {
-  console.error(
-    "❌ No se encontró el elemento con id='root'. Revisa tu index.html"
-  );
+  console.error("❌ No se encontró el elemento con id='root'. Revisa tu index.html");
 } else {
   const root = ReactDOM.createRoot(rootElement);
 
   root.render(
     <React.StrictMode>
-      <HelmetProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            {/* Suspense para mostrar loader mientras cargan las rutas */}
+      <AuthProvider>
+        <HelmetProvider>
+          <BrowserRouter basename="/">
+            {/* Suspense mostrará Loader mientras carga la app */}
             <Suspense fallback={<Loader />}>
               <App />
             </Suspense>
-          </AuthProvider>
-        </BrowserRouter>
-      </HelmetProvider>
+          </BrowserRouter>
+        </HelmetProvider>
+      </AuthProvider>
     </React.StrictMode>
   );
 }

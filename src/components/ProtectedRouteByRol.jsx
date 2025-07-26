@@ -16,11 +16,7 @@ const ProtectedRouteByRol = ({ rolesPermitidos }) => {
         try {
           const ref = doc(db, "usuarios", user.uid);
           const snap = await getDoc(ref);
-          if (snap.exists()) {
-            setRolUsuario(snap.data().rol || "");
-          } else {
-            setRolUsuario("");
-          }
+          setRolUsuario(snap.exists() ? snap.data().rol || "" : "");
         } catch (error) {
           console.error("Error obteniendo el rol del usuario:", error);
           setRolUsuario("");
