@@ -5,11 +5,13 @@ import { motion } from "framer-motion";
 import logo from "../assets/galeria/logo.png";
 import fondo from "../assets/galeria/fondo-barberia.jpg";
 import { useAuth } from "../context/AuthContext";
+import { Helmet } from "react-helmet-async";
 
 const adminOpciones = [
   { path: "/admin/usuarios", label: "👥 Gestión de Usuarios", color: "bg-indigo-600" },
   { path: "/admin/horarios", label: "🕒 Horarios y Reservas", color: "bg-cyan-600" },
   { path: "/admin/servicios", label: "💈 Servicios", color: "bg-yellow-600" },
+  { path: "/admin/manual", label: "📝 Reserva Manual", color: "bg-purple-600" },
 ];
 
 export default function AdminPanel() {
@@ -34,6 +36,10 @@ export default function AdminPanel() {
       className="min-h-screen w-full bg-cover bg-center bg-no-repeat relative"
       style={{ backgroundImage: `url(${fondo})` }}
     >
+      <Helmet>
+        <title>Panel de Administración | BarberYass</title>
+      </Helmet>
+
       <div className="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
 
       <div className="relative z-10 p-6 max-w-6xl mx-auto flex flex-col items-center justify-center min-h-screen">
