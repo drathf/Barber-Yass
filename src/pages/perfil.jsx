@@ -29,7 +29,7 @@ export default function Perfil() {
   const [mensaje, setMensaje] = useState("");
   const [fotoPerfil, setFotoPerfil] = useState("");
 
-  // Estadísticas para admin
+  // Estadísticas
   const [stats, setStats] = useState({
     totalReservas: 0,
     reservasActivas: 0,
@@ -38,16 +38,16 @@ export default function Perfil() {
     ganancias: 0,
   });
 
-  // Filtros de búsqueda
+  // Filtros
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroFechaInicio, setFiltroFechaInicio] = useState("");
   const [filtroFechaFin, setFiltroFechaFin] = useState("");
 
-  // Estado login manual
+  // Login
   const [credenciales, setCredenciales] = useState({ email: "", password: "" });
   const [procesando, setProcesando] = useState(false);
 
-  // Estado formulario para registro (solo admin/god/barberyass)
+  // Formulario registrar usuario (solo roles admin)
   const [nuevoUsuario, setNuevoUsuario] = useState({
     nombre: "",
     email: "",
@@ -56,7 +56,7 @@ export default function Perfil() {
   });
   const [registrando, setRegistrando] = useState(false);
 
-  // 📷 Cargar foto de perfil del usuario
+  // Foto de perfil
   useEffect(() => {
     const cargarDatosUsuario = async () => {
       if (usuario) {
@@ -71,32 +71,22 @@ export default function Perfil() {
     cargarDatosUsuario();
   }, [usuario]);
 
-  // 🔹 Cargar datos de reservas y dashboard
+  // Datos dashboard
   useEffect(() => {
     if (!usuario) return;
-
     const cargarDatos = async () => {
       try {
         if (rol === "user" || rol === "vip") {
-          const q = query(
-            collection(db, "reservas"),
-            where("uid", "==", usuario.uid)
-          );
+          const q = query(collection(db, "reservas"), where("uid", "==", usuario.uid));
           const snap = await getDocs(q);
           setReservas(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
         }
-
         if (["admin", "barberyass", "god"].includes(rol)) {
           const reservasSnap = await getDocs(collection(db, "reservas"));
           const usuariosSnap = await getDocs(collection(db, "usuarios"));
-
-          const reservasData = reservasSnap.docs.map((d) => ({
-            id: d.id,
-            ...d.data(),
-          }));
+          const reservasData = reservasSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
           setReservas(reservasData);
           setUsuarios(usuariosSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
-
           calcularStats(reservasData);
         }
       } catch (error) {
@@ -104,30 +94,23 @@ export default function Perfil() {
         setMensaje("⚠️ Error cargando datos desde Firestore.");
       }
     };
-
     cargarDatos();
   }, [usuario, rol]);
 
-  // 🔹 Calcular estadísticas
+  // Estadísticas
   const calcularStats = (data) => {
-    const total = data.length;
-    const activas = data.filter((r) => r.estado === "activa").length;
-    const atendidas = data.filter((r) => r.estado === "atendido").length;
-    const canceladas = data.filter((r) => r.estado === "cancelada").length;
-    const ganancias = data
-      .filter((r) => r.estado === "atendido")
-      .reduce((sum, r) => sum + (r.precio || 0), 0);
-
     setStats({
-      totalReservas: total,
-      reservasActivas: activas,
-      reservasAtendidas: atendidas,
-      reservasCanceladas: canceladas,
-      ganancias,
+      totalReservas: data.length,
+      reservasActivas: data.filter((r) => r.estado === "activa").length,
+      reservasAtendidas: data.filter((r) => r.estado === "atendido").length,
+      reservasCanceladas: data.filter((r) => r.estado === "cancelada").length,
+      ganancias: data
+        .filter((r) => r.estado === "atendido")
+        .reduce((sum, r) => sum + (r.precio || 0), 0),
     });
   };
 
-  // 🔹 Confirmar pago (solo usuarios normales)
+  // Confirmar pago
   const activarPago = async () => {
     if (rol !== "user") {
       setMensaje("⚠️ Solo los usuarios pueden confirmar su pago");
@@ -137,12 +120,11 @@ export default function Perfil() {
     setMensaje("✅ Estado de pago actualizado correctamente.");
   };
 
-  // 🔹 Filtrar reservas
+  // Filtrar reservas
   const reservasFiltradas = reservas.filter((r) => {
     const fechaR = new Date(r.fecha);
     const fechaInicio = filtroFechaInicio ? new Date(filtroFechaInicio) : null;
     const fechaFin = filtroFechaFin ? new Date(filtroFechaFin) : null;
-
     return (
       (filtroEstado ? r.estado === filtroEstado : true) &&
       (fechaInicio ? fechaR >= fechaInicio : true) &&
@@ -150,7 +132,7 @@ export default function Perfil() {
     );
   });
 
-  // 🔹 Exportar Excel
+  // Exportar
   const exportarExcel = () => {
     const data = reservasFiltradas.map((r) => ({
       Cliente: r.nombre || "",
@@ -160,109 +142,72 @@ export default function Perfil() {
       Precio: `S/. ${r.precio || 0}`,
       Estado: r.estado,
     }));
-
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Reservas");
     XLSX.writeFile(wb, `Reporte_BarberYass_${Date.now()}.xlsx`);
   };
 
-  // 🔹 Exportar PDF
   const exportarPDF = () => {
     const docPDF = new jsPDF();
     docPDF.text("Reporte BarberYass", 14, 15);
-
-    const columnas = ["Cliente", "Fecha", "Hora", "Servicio", "Precio", "Estado"];
-    const filas = reservasFiltradas.map((r) => [
-      r.nombre,
-      r.fecha,
-      r.hora,
-      r.servicio,
-      `S/. ${r.precio || 0}`,
-      r.estado,
-    ]);
-
     docPDF.autoTable({
-      head: [columnas],
-      body: filas,
+      head: [["Cliente", "Fecha", "Hora", "Servicio", "Precio", "Estado"]],
+      body: reservasFiltradas.map((r) => [
+        r.nombre,
+        r.fecha,
+        r.hora,
+        r.servicio,
+        `S/. ${r.precio || 0}`,
+        r.estado,
+      ]),
       startY: 25,
     });
-
     docPDF.save(`Reporte_BarberYass_${Date.now()}.pdf`);
   };
 
-  // 🔹 Iniciar sesión manual (con validación en Firestore y Auth)
+  // Login
   const iniciarSesion = async (e) => {
     e.preventDefault();
     if (!credenciales.email || !credenciales.password) {
       setMensaje("⚠️ Ingresa tu email y contraseña");
       return;
     }
-
     try {
       setProcesando(true);
-
-      // Validar si existe en Firestore
-      const q = query(
-        collection(db, "usuarios"),
-        where("email", "==", credenciales.email.trim().toLowerCase())
-      );
-      const snap = await getDocs(q);
-
-      if (snap.empty) {
-        setMensaje("❌ Usuario no encontrado en Firestore");
-        setProcesando(false);
-        return;
-      }
-
-      // Intentar login en Auth
       await signInWithEmailAndPassword(
         auth,
         credenciales.email.trim().toLowerCase(),
         credenciales.password
       );
-
       setMensaje("✅ Bienvenido");
     } catch (error) {
-      console.error("❌ Error login:", error.code, error.message);
-      if (error.code === "auth/user-not-found") {
-        setMensaje("⚠️ Usuario no existe en Firebase Auth");
-      } else if (error.code === "auth/wrong-password") {
-        setMensaje("❌ Contraseña incorrecta");
-      } else {
-        setMensaje("⚠️ Error al iniciar sesión");
-      }
+      console.error("❌ Error login:", error.code);
+      setMensaje("❌ Credenciales incorrectas o usuario no registrado");
     } finally {
       setProcesando(false);
     }
   };
 
-  // 🔹 Cerrar sesión
   const cerrarSesion = async () => {
     await signOut(auth);
   };
 
-  // 🔹 Registrar usuario en Auth + Firestore
+  // Registrar usuario (Auth + Firestore)
   const registrarUsuario = async (e) => {
     e.preventDefault();
     if (!nuevoUsuario.email || !nuevoUsuario.password || !nuevoUsuario.nombre) {
-      setMensaje("⚠️ Completa todos los campos del nuevo usuario");
+      setMensaje("⚠️ Completa todos los campos");
       return;
     }
-
     try {
       setRegistrando(true);
-
-      // Crear en Auth
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         nuevoUsuario.email.trim().toLowerCase(),
         nuevoUsuario.password
       );
-
       const user = userCredential.user;
-
-      // Guardar en Firestore
       await setDoc(doc(db, "usuarios", user.uid), {
         uid: user.uid,
         email: nuevoUsuario.email.trim().toLowerCase(),
@@ -271,65 +216,47 @@ export default function Perfil() {
         requierePago: false,
         creado: new Date().toISOString(),
       });
-
       setMensaje("✅ Usuario registrado correctamente");
       setNuevoUsuario({ nombre: "", email: "", password: "", rol: "user" });
     } catch (error) {
-      console.error("❌ Error registrando usuario:", error);
-      setMensaje("⚠️ No se pudo registrar el usuario");
+      console.error("❌ Error registrando usuario:", error.code);
+      setMensaje("⚠️ Error al registrar usuario");
     } finally {
       setRegistrando(false);
     }
   };
 
-  // Loader mientras carga
+  // Loader
   if (cargando) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        ⏳ Cargando...
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center">⏳ Cargando...</div>;
   }
 
-  // Si no está logueado -> Mostrar login
+  // Si no está logueado
   if (!usuario) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6">
-        <motion.img
-          src={logo}
-          alt="Logo"
-          className="w-24 mb-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        />
+        <motion.img src={logo} alt="Logo" className="w-24 mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} />
         <h2 className="text-xl font-bold mb-4">🔐 Inicia sesión</h2>
         {mensaje && <p className="mb-3 text-center text-red-600">{mensaje}</p>}
-
         <form onSubmit={iniciarSesion} className="w-full max-w-sm space-y-4">
           <input
             type="email"
             placeholder="Correo electrónico"
             className="w-full border p-2 rounded"
             value={credenciales.email}
-            onChange={(e) =>
-              setCredenciales({ ...credenciales, email: e.target.value })
-            }
+            onChange={(e) => setCredenciales({ ...credenciales, email: e.target.value })}
           />
           <input
             type="password"
             placeholder="Contraseña"
             className="w-full border p-2 rounded"
             value={credenciales.password}
-            onChange={(e) =>
-              setCredenciales({ ...credenciales, password: e.target.value })
-            }
+            onChange={(e) => setCredenciales({ ...credenciales, password: e.target.value })}
           />
           <button
             type="submit"
             disabled={procesando}
-            className={`w-full py-2 rounded text-white ${
-              procesando ? "bg-gray-400" : "bg-black hover:bg-gray-800"
-            }`}
+            className={`w-full py-2 rounded text-white ${procesando ? "bg-gray-400" : "bg-black hover:bg-gray-800"}`}
           >
             {procesando ? "Conectando..." : "Iniciar sesión"}
           </button>
@@ -338,22 +265,13 @@ export default function Perfil() {
     );
   }
 
-  // Si está logueado -> Mostrar perfil y dashboard
+  // Si está logueado
   return (
     <div className="min-h-screen p-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <motion.img
-          src={logo}
-          alt="Logo"
-          className="w-20"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        />
-        <button
-          onClick={cerrarSesion}
-          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-        >
+        <motion.img src={logo} alt="Logo" className="w-20" initial={{ opacity: 0 }} animate={{ opacity: 1 }} />
+        <button onClick={cerrarSesion} className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded">
           Cerrar sesión
         </button>
       </div>
@@ -361,42 +279,35 @@ export default function Perfil() {
       <h2 className="text-2xl font-bold text-center mb-4">👤 Mi Perfil</h2>
       {mensaje && <p className="text-center mb-3 text-green-600">{mensaje}</p>}
 
-      {/* Datos usuario */}
+      {/* Datos */}
       <div className="max-w-md mx-auto bg-gray-100 p-6 rounded shadow mb-6 text-center">
         <img
           src={fotoPerfil || `https://ui-avatars.com/api/?name=${usuario.email}`}
           alt="Foto de perfil"
           className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-2 border-purple-400"
         />
-        <p className="text-lg font-semibold">
-          {usuario.displayName || "Usuario"}
-        </p>
+        <p className="text-lg font-semibold">{usuario.displayName || "Usuario"}</p>
         <p className="text-sm text-gray-700">{usuario.email}</p>
         <p className="text-sm mt-1">
           <strong>Rol:</strong> {rol}
         </p>
       </div>
 
-      {/* Pago para user */}
+      {/* Pago */}
       {rol === "user" && (
         <div className="text-center mb-6">
-          <button
-            onClick={activarPago}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
+          <button onClick={activarPago} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
             Confirmar Pago 50%
           </button>
         </div>
       )}
 
-      {/* Dashboard Admin */}
+      {/* Dashboard */}
       {["admin", "barberyass", "god"].includes(rol) && (
         <div className="max-w-6xl mx-auto mb-10">
-          <h3 className="text-2xl font-semibold mb-6 text-center">
-            📊 Dashboard BarberYass
-          </h3>
+          <h3 className="text-2xl font-semibold mb-6 text-center">📊 Dashboard BarberYass</h3>
 
-          {/* Estadísticas */}
+          {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
             <div className="bg-blue-100 p-4 rounded shadow text-center">
               <p className="text-3xl font-bold">{stats.totalReservas}</p>
@@ -415,101 +326,46 @@ export default function Perfil() {
               <p>Canceladas</p>
             </div>
             <div className="bg-yellow-100 p-4 rounded shadow text-center">
-              <p className="text-3xl font-bold">
-                S/. {stats.ganancias.toFixed(2)}
-              </p>
+              <p className="text-3xl font-bold">S/. {stats.ganancias.toFixed(2)}</p>
               <p>Ganancias</p>
             </div>
           </div>
 
-          {/* Filtros */}
-          <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
-            <div className="flex gap-2">
-              <input
-                type="date"
-                value={filtroFechaInicio}
-                onChange={(e) => setFiltroFechaInicio(e.target.value)}
-                className="border p-2 rounded"
-              />
-              <input
-                type="date"
-                value={filtroFechaFin}
-                onChange={(e) => setFiltroFechaFin(e.target.value)}
-                className="border p-2 rounded"
-              />
-              <select
-                value={filtroEstado}
-                onChange={(e) => setFiltroEstado(e.target.value)}
-                className="border p-2 rounded"
-              >
-                <option value="">Todos</option>
-                <option value="activa">Activa</option>
-                <option value="atendido">Atendida</option>
-                <option value="cancelada">Cancelada</option>
-              </select>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={exportarExcel}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              >
-                Exportar Excel
-              </button>
-              <button
-                onClick={exportarPDF}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-              >
-                Exportar PDF
-              </button>
-            </div>
-          </div>
-
-          {/* Formulario registrar usuario */}
+          {/* Form registrar usuario */}
           <div className="bg-gray-200 p-6 rounded mb-6">
             <h4 className="text-xl font-semibold mb-4">➕ Registrar nuevo usuario</h4>
-            <form
-              onSubmit={registrarUsuario}
-              className="grid grid-cols-1 md:grid-cols-4 gap-4"
-            >
+            <form onSubmit={registrarUsuario} className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <input
                 type="text"
                 placeholder="Nombre"
                 className="p-2 border rounded"
                 value={nuevoUsuario.nombre}
-                onChange={(e) =>
-                  setNuevoUsuario({ ...nuevoUsuario, nombre: e.target.value })
-                }
+                onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, nombre: e.target.value })}
               />
               <input
                 type="email"
                 placeholder="Correo"
                 className="p-2 border rounded"
                 value={nuevoUsuario.email}
-                onChange={(e) =>
-                  setNuevoUsuario({ ...nuevoUsuario, email: e.target.value })
-                }
+                onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, email: e.target.value })}
               />
               <input
                 type="password"
                 placeholder="Contraseña"
                 className="p-2 border rounded"
                 value={nuevoUsuario.password}
-                onChange={(e) =>
-                  setNuevoUsuario({ ...nuevoUsuario, password: e.target.value })
-                }
+                onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, password: e.target.value })}
               />
               <select
                 className="p-2 border rounded"
                 value={nuevoUsuario.rol}
-                onChange={(e) =>
-                  setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value })
-                }
+                onChange={(e) => setNuevoUsuario({ ...nuevoUsuario, rol: e.target.value })}
               >
                 <option value="user">User</option>
                 <option value="vip">VIP</option>
                 <option value="admin">Admin</option>
                 <option value="barberyass">Barberyass</option>
+                <option value="god">God</option>
               </select>
               <button
                 type="submit"
@@ -523,13 +379,11 @@ export default function Perfil() {
         </div>
       )}
 
-      {/* Reservas */}
+      {/* Tabla reservas */}
       <h3 className="text-xl font-semibold mb-3 text-center">📋 Mis Reservas</h3>
       <div className="max-w-6xl mx-auto">
         {reservasFiltradas.length === 0 ? (
-          <p className="text-center text-gray-600">
-            No se encontraron reservas
-          </p>
+          <p className="text-center text-gray-600">No se encontraron reservas</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm border">
