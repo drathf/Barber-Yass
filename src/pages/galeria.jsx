@@ -9,16 +9,14 @@ import marca2 from "../assets/galeria/Logo MARMA2. marca2.jpg";
 import marca3 from "../assets/galeria/Logo 99. marca3.jpg";
 
 // Importar automáticamente todas las imágenes de servicios
-const imagenes = Object.values(
-  import.meta.glob("../assets/galeria/servicios*.jpg", {
-    eager: true,
-    query: "url",
-  })
-).sort((a, b) => {
-  const numA = parseInt(a.match(/(\d+)\.jpg$/)?.[1] || 0);
-  const numB = parseInt(b.match(/(\d+)\.jpg$/)?.[1] || 0);
-  return numA - numB;
-});
+const imagesObject = import.meta.glob("../assets/galeria/servicios*.jpg", { eager: true });
+const imagenes = Object.values(imagesObject)
+  .map((module) => module.default)
+  .sort((a, b) => {
+    const numA = parseInt(a.match(/(\d+)\.jpg$/)?.[1] || 0);
+    const numB = parseInt(b.match(/(\d+)\.jpg$/)?.[1] || 0);
+    return numA - numB;
+  });
 
 export default function Galeria() {
   const [indexActivo, setIndexActivo] = useState(null);
