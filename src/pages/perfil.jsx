@@ -22,7 +22,7 @@ export default function Perfil() {
   const [reservas, setReservas] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [mensaje, setMensaje] = useState("");
-  const [fotoPerfil, setFotoPerfil] = useState(""); // 🔹 foto perfil Firestore
+  const [fotoPerfil, setFotoPerfil] = useState("");
   const [stats, setStats] = useState({
     totalReservas: 0,
     reservasActivas: 0,
@@ -40,10 +40,10 @@ export default function Perfil() {
   const [credenciales, setCredenciales] = useState({ email: "", password: "" });
   const [procesando, setProcesando] = useState(false);
 
+  // 🔹 Cargar foto de perfil
   useEffect(() => {
     const cargarDatosUsuario = async () => {
       if (usuario) {
-        // 🔹 Traer foto de perfil desde Firestore
         const ref = doc(db, "usuarios", usuario.uid);
         const snap = await getDoc(ref);
         if (snap.exists()) {
@@ -55,34 +55,46 @@ export default function Perfil() {
     cargarDatosUsuario();
   }, [usuario]);
 
+  // 🔹 Cargar datos de reservas y dashboard
   useEffect(() => {
     if (!usuario) return;
 
     const cargarDatos = async () => {
-      if (rol === "user" || rol === "vip") {
-        // Solo sus reservas
-        const q = query(collection(db, "reservas"), where("uid", "==", usuario.uid));
-        const snap = await getDocs(q);
-        setReservas(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      }
+      try {
+        if (rol === "user" || rol === "vip") {
+          const q = query(
+            collection(db, "reservas"),
+            where("uid", "==", usuario.uid)
+          );
+          const snap = await getDocs(q);
+          setReservas(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        }
 
-      if (rol === "admin" || rol === "barberyass" || rol === "god") {
-        // Dashboard
-        const reservasSnap = await getDocs(collection(db, "reservas"));
-        const usuariosSnap = await getDocs(collection(db, "usuarios"));
+        if (["admin", "barberyass", "god"].includes(rol)) {
+          const reservasSnap = await getDocs(collection(db, "reservas"));
+          const usuariosSnap = await getDocs(collection(db, "usuarios"));
 
-        const reservasData = reservasSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setReservas(reservasData);
-        setUsuarios(usuariosSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+          const reservasData = reservasSnap.docs.map((d) => ({
+            id: d.id,
+            ...d.data(),
+          }));
+          setReservas(reservasData);
+          setUsuarios(
+            usuariosSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+          );
 
-        calcularStats(reservasData);
+          calcularStats(reservasData);
+        }
+      } catch (error) {
+        console.error("❌ Error cargando datos:", error);
+        setMensaje("⚠️ Error cargando datos. Revisa Firestore.");
       }
     };
 
     cargarDatos();
   }, [usuario, rol]);
 
-  // Estadísticas generales
+  // 🔹 Estadísticas
   const calcularStats = (data) => {
     const total = data.length;
     const activas = data.filter((r) => r.estado === "activa").length;
@@ -101,17 +113,17 @@ export default function Perfil() {
     });
   };
 
-  // Confirmar pago user
+  // 🔹 Confirmar pago (solo user)
   const activarPago = async () => {
     if (rol !== "user") {
-      setMensaje("⚠️ Solo los usuarios 👤 pueden cambiar su estado de pago");
+      setMensaje("⚠️ Solo los usuarios pueden confirmar su pago");
       return;
     }
     await updateDoc(doc(db, "usuarios", usuario.uid), { requierePago: false });
-    setMensaje("✅ Tu estado de pago fue actualizado. Ahora puedes reservar.");
+    setMensaje("✅ Estado de pago actualizado correctamente.");
   };
 
-  // Filtrar reservas
+  // 🔹 Filtrar reservas
   const reservasFiltradas = reservas.filter((r) => {
     const fechaR = new Date(r.fecha);
     const fechaInicio = filtroFechaInicio ? new Date(filtroFechaInicio) : null;
@@ -124,7 +136,7 @@ export default function Perfil() {
     );
   });
 
-  // Exportar Excel
+  // 🔹 Exportar Excel
   const exportarExcel = () => {
     const data = reservasFiltradas.map((r) => ({
       Cliente: r.nombre || "",
@@ -141,7 +153,7 @@ export default function Perfil() {
     XLSX.writeFile(wb, `Reporte_BarberYass_${Date.now()}.xlsx`);
   };
 
-  // Exportar PDF
+  // 🔹 Exportar PDF
   const exportarPDF = () => {
     const docPDF = new jsPDF();
     docPDF.text("Reporte BarberYass", 14, 15);
@@ -165,7 +177,7 @@ export default function Perfil() {
     docPDF.save(`Reporte_BarberYass_${Date.now()}.pdf`);
   };
 
-  // Login y logout
+  // 🔹 Iniciar sesión
   const iniciarSesion = async (e) => {
     e.preventDefault();
     if (!credenciales.email || !credenciales.password) {
@@ -175,30 +187,45 @@ export default function Perfil() {
 
     try {
       setProcesando(true);
-      await signInWithEmailAndPassword(auth, credenciales.email, credenciales.password);
+      await signInWithEmailAndPassword(
+        auth,
+        credenciales.email.trim().toLowerCase(),
+        credenciales.password
+      );
       setMensaje("✅ Bienvenido");
     } catch (error) {
-      console.error(error);
+      console.error("❌ Error login:", error.code, error.message);
       setMensaje("❌ Credenciales incorrectas");
     } finally {
       setProcesando(false);
     }
   };
 
+  // 🔹 Cerrar sesión
   const cerrarSesion = async () => {
     await signOut(auth);
   };
 
   // Loader
   if (cargando) {
-    return <div className="min-h-screen flex items-center justify-center">Cargando...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        ⏳ Cargando...
+      </div>
+    );
   }
 
-  // Si no está logueado -> Login
+  // 🔹 Si no está logueado -> Login
   if (!usuario) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6">
-        <motion.img src={logo} alt="Logo" className="w-24 mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} />
+        <motion.img
+          src={logo}
+          alt="Logo"
+          className="w-24 mb-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        />
         <h2 className="text-xl font-bold mb-4">🔐 Inicia sesión</h2>
         {mensaje && <p className="mb-3 text-center text-red-600">{mensaje}</p>}
 
@@ -208,19 +235,25 @@ export default function Perfil() {
             placeholder="Correo electrónico"
             className="w-full border p-2 rounded"
             value={credenciales.email}
-            onChange={(e) => setCredenciales({ ...credenciales, email: e.target.value })}
+            onChange={(e) =>
+              setCredenciales({ ...credenciales, email: e.target.value })
+            }
           />
           <input
             type="password"
             placeholder="Contraseña"
             className="w-full border p-2 rounded"
             value={credenciales.password}
-            onChange={(e) => setCredenciales({ ...credenciales, password: e.target.value })}
+            onChange={(e) =>
+              setCredenciales({ ...credenciales, password: e.target.value })
+            }
           />
           <button
             type="submit"
             disabled={procesando}
-            className={`w-full py-2 rounded text-white ${procesando ? "bg-gray-400" : "bg-black hover:bg-gray-800"}`}
+            className={`w-full py-2 rounded text-white ${
+              procesando ? "bg-gray-400" : "bg-black hover:bg-gray-800"
+            }`}
           >
             {procesando ? "Conectando..." : "Iniciar sesión"}
           </button>
@@ -229,11 +262,17 @@ export default function Perfil() {
     );
   }
 
-  // Si está logueado -> Perfil
+  // 🔹 Si está logueado -> Perfil
   return (
     <div className="min-h-screen p-6">
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        <motion.img src={logo} alt="Logo" className="w-20" initial={{ opacity: 0 }} animate={{ opacity: 1 }} />
+        <motion.img
+          src={logo}
+          alt="Logo"
+          className="w-20"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        />
         <button
           onClick={cerrarSesion}
           className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
@@ -247,20 +286,21 @@ export default function Perfil() {
 
       {/* Datos usuario */}
       <div className="max-w-md mx-auto bg-gray-100 p-6 rounded shadow mb-6 text-center">
-        {/* Foto de perfil */}
         <img
           src={fotoPerfil || "https://ui-avatars.com/api/?name=" + usuario.email}
           alt="Foto de perfil"
           className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-2 border-purple-400"
         />
-        <p className="text-lg font-semibold">{usuario.displayName || "Usuario"}</p>
+        <p className="text-lg font-semibold">
+          {usuario.displayName || "Usuario"}
+        </p>
         <p className="text-sm text-gray-700">{usuario.email}</p>
         <p className="text-sm mt-1">
           <strong>Rol:</strong> {rol}
         </p>
       </div>
 
-      {/* Pago usuario 👤 */}
+      {/* Pago usuario */}
       {rol === "user" && (
         <div className="text-center mb-6">
           <button
@@ -272,10 +312,12 @@ export default function Perfil() {
         </div>
       )}
 
-      {/* Dashboard roles admin/god/barberyass */}
-      {(rol === "admin" || rol === "barberyass" || rol === "god") && (
+      {/* Dashboard */}
+      {["admin", "barberyass", "god"].includes(rol) && (
         <div className="max-w-6xl mx-auto mb-10">
-          <h3 className="text-2xl font-semibold mb-6 text-center">📊 Dashboard BarberYass</h3>
+          <h3 className="text-2xl font-semibold mb-6 text-center">
+            📊 Dashboard BarberYass
+          </h3>
 
           {/* Estadísticas */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
@@ -296,7 +338,9 @@ export default function Perfil() {
               <p>Canceladas</p>
             </div>
             <div className="bg-yellow-100 p-4 rounded shadow text-center">
-              <p className="text-3xl font-bold">S/. {stats.ganancias.toFixed(2)}</p>
+              <p className="text-3xl font-bold">
+                S/. {stats.ganancias.toFixed(2)}
+              </p>
               <p>Ganancias</p>
             </div>
           </div>
@@ -350,7 +394,9 @@ export default function Perfil() {
       <h3 className="text-xl font-semibold mb-3 text-center">📋 Mis Reservas</h3>
       <div className="max-w-6xl mx-auto">
         {reservasFiltradas.length === 0 ? (
-          <p className="text-center text-gray-600">No se encontraron reservas</p>
+          <p className="text-center text-gray-600">
+            No se encontraron reservas
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm border">

@@ -1,20 +1,24 @@
-{
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
-  "hosting": {
-    "public": "dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  }
-}
+import { initializeApp, getApps } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { getFunctions } from "firebase/functions";
+import { getStorage } from "firebase/storage";
+
+// Configuración de Firebase (copiar de la consola)
+const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "barberyass.firebaseapp.com",
+  projectId: "barberyass",
+  storageBucket: "barberyass.appspot.com",
+  messagingSenderId: "971412744981",
+  appId: "1:971412744981:web:fa2bd795477b170600971c",
+  measurementId: "G-LGTKEPPCTH"
+};
+
+// Inicializa Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+
+export const db = getFirestore(app);
+export const auth = getAuth(app);
+export const functions = getFunctions(app);
+export const storage = getStorage(app);
