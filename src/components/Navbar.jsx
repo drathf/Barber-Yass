@@ -15,7 +15,7 @@ const Navbar = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [esTransparente, setEsTransparente] = useState(true);
 
-  // Controlar si el navbar es transparente (solo en home y arriba)
+  // Controla transparencia solo en Home (arriba)
   useEffect(() => {
     const manejarScroll = () => {
       setEsTransparente(location.pathname === "/" && window.scrollY <= 50);
@@ -25,7 +25,7 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", manejarScroll);
   }, [location.pathname]);
 
-  // Escuchar sesión y cargar datos del usuario
+  // Escuchar cambios de sesión
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -52,7 +52,7 @@ const Navbar = () => {
     navigate("/");
   };
 
-  // Links del navbar
+  // Ítems principales
   const navItems = [
     { path: "/", label: "Inicio" },
     { path: "/galeria", label: "Galería" },
@@ -71,11 +71,11 @@ const Navbar = () => {
       transition={{ duration: 0.4 }}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3 text-white">
-        {/* Logo -> Perfil */}
+        {/* Logo -> Perfil/Login */}
         <button
           onClick={() => navigate("/perfil")}
           className="flex items-center gap-2 hover:scale-105 transition"
-          title="Ir a perfil/login"
+          title={usuario ? "Ir a tu perfil" : "Iniciar sesión"}
         >
           <img src={logo} alt="Logo Lugo Studio" className="w-10 h-10 object-contain" />
           <span className="font-bold text-lg tracking-wide">Lugo Studio</span>
@@ -123,7 +123,7 @@ const Navbar = () => {
           )}
 
           {/* Usuario logueado */}
-          {usuario && (
+          {usuario ? (
             <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3">
               <span className="text-xs md:text-sm truncate max-w-[150px] md:max-w-none">
                 👤 {nombreUsuario}
@@ -134,6 +134,24 @@ const Navbar = () => {
               >
                 Cerrar sesión
               </button>
+            </div>
+          ) : (
+            // Enlaces cuando NO está logueado
+            <div className="flex flex-col md:flex-row gap-2">
+              <Link
+                to="/perfil"
+                onClick={() => setMenuAbierto(false)}
+                className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-white text-xs transition text-center"
+              >
+                Iniciar sesión
+              </Link>
+              <Link
+                to="/recuperar"
+                onClick={() => setMenuAbierto(false)}
+                className="text-gray-300 hover:text-purple-400 text-xs text-center"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
             </div>
           )}
         </nav>

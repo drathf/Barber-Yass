@@ -1,8 +1,8 @@
-// ✅ confirmacion.jsx optimizado con SEO y logo desde galería
+// ✅ Confirmacion.jsx optimizado con SEO, Helmet-Async y animaciones
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import logo from '../assets/galeria/logo.png';
 
 const Confirmacion = () => {
@@ -10,8 +10,14 @@ const Confirmacion = () => {
     <div className="min-h-screen flex flex-col items-center justify-center text-center px-4 bg-white">
       <Helmet>
         <title>Reserva Confirmada | BarberYass</title>
-        <meta name="description" content="Confirmación de tu cita en BarberYass. ¡Gracias por reservar con nosotros!" />
-        <meta name="keywords" content="confirmación reserva, BarberYass, cita barbero" />
+        <meta
+          name="description"
+          content="Confirmación de tu cita en BarberYass. ¡Gracias por reservar con nosotros!"
+        />
+        <meta
+          name="keywords"
+          content="confirmación reserva, BarberYass, cita barbero"
+        />
         <meta name="author" content="BarberYass" />
       </Helmet>
 
@@ -34,7 +40,7 @@ const Confirmacion = () => {
       </motion.h1>
 
       <p className="mb-6 text-gray-700 max-w-md">
-        Gracias por confiar en BarberYass. Hemos registrado tu cita con éxito y pronto recibirás la confirmación por <strong>WhatsApp</strong>. 
+        Gracias por confiar en <strong>BarberYass</strong>. Hemos registrado tu cita con éxito y pronto recibirás la confirmación por <strong>WhatsApp</strong>. 
       </p>
 
       <Link

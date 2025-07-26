@@ -1,3 +1,4 @@
+// src/App.jsx
 import React from "react";
 import { Routes, Route, Link, Outlet } from "react-router-dom";
 
@@ -29,7 +30,6 @@ import wsIcon from "./assets/galeria/ws-white.svg";
 import igIcon from "./assets/galeria/ig-white.svg";
 import gmailIcon from "./assets/galeria/gmail-white.svg";
 
-
 // ❌ Página 404
 const NotFound = () => (
   <div className="min-h-screen flex flex-col justify-center items-center text-center p-10">
@@ -41,7 +41,7 @@ const NotFound = () => (
   </div>
 );
 
-// 📦 Layout interno fusionado (Navbar + Footer)
+// 📦 Layout global (Navbar + Footer)
 const Layout = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 text-gray-800">

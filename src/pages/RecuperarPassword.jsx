@@ -1,3 +1,4 @@
+// src/pages/RecuperarPassword.jsx
 import React, { useState } from "react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase/firebase";
@@ -35,10 +36,14 @@ const RecuperarPassword = () => {
     >
       <Helmet>
         <title>Recuperar Contraseña | BarberYass</title>
-        <meta name="description" content="Restablece tu contraseña de BarberYass si la has olvidado." />
+        <meta
+          name="description"
+          content="Restablece tu contraseña de BarberYass si la has olvidado."
+        />
+        <meta name="keywords" content="recuperar contraseña, BarberYass, login" />
       </Helmet>
 
-      {/* Overlay oscuro */}
+      {/* Overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-60 z-0" />
 
       <motion.div
@@ -50,8 +55,12 @@ const RecuperarPassword = () => {
         <img src={logo} alt="Logo BarberYass" className="w-20 mx-auto mb-4" />
         <h2 className="text-xl font-bold mb-4 text-gray-800">Recuperar contraseña</h2>
 
-        {mensaje && <p className="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm">{mensaje}</p>}
-        {error && <p className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">{error}</p>}
+        {mensaje && (
+          <p className="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm">{mensaje}</p>
+        )}
+        {error && (
+          <p className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">{error}</p>
+        )}
 
         <form onSubmit={handleReset} className="space-y-4 text-left">
           <input
@@ -71,8 +80,11 @@ const RecuperarPassword = () => {
         </form>
 
         <p className="text-sm mt-4 text-gray-500">
-          ¿Ya lo recordaste?{" "}
-          <button onClick={() => navigate("/login")} className="text-blue-600 underline">
+          ¿Ya recordaste tu contraseña?{" "}
+          <button
+            onClick={() => navigate("/login")}
+            className="text-blue-600 underline"
+          >
             Iniciar sesión
           </button>
         </p>
