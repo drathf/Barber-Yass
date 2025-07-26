@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async"; // ✅ Usar helmet-async
+
 import logo from "../assets/galeria/logo.png";
 
 // Logos de marcas aliadas
@@ -8,10 +9,14 @@ import marca1 from "../assets/galeria/Logo NOT BEER. marca1.jpg";
 import marca2 from "../assets/galeria/Logo MARMA2. marca2.jpg";
 import marca3 from "../assets/galeria/Logo 99. marca3.jpg";
 
-// Importar automáticamente todas las imágenes de servicios
-const imagesObject = import.meta.glob("../assets/galeria/servicios*.jpg", { eager: true });
+// ✅ Importar automáticamente todas las imágenes y filtrar strings válidos
+const imagesObject = import.meta.glob("../assets/galeria/servicios*.jpg", {
+  eager: true,
+});
+
 const imagenes = Object.values(imagesObject)
-  .map((module) => module.default)
+  .map((module) => module?.default || "")
+  .filter((img) => typeof img === "string" && img.endsWith(".jpg")) // Filtrar solo strings
   .sort((a, b) => {
     const numA = parseInt(a.match(/(\d+)\.jpg$/)?.[1] || 0);
     const numB = parseInt(b.match(/(\d+)\.jpg$/)?.[1] || 0);
@@ -55,22 +60,28 @@ export default function Galeria() {
 
       {/* Grid de imágenes */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-12">
-        {imagenes.map((src, index) => (
-          <motion.div
-            key={index}
-            className="rounded overflow-hidden shadow-lg bg-white cursor-pointer"
-            whileHover={{ scale: 1.03 }}
-            transition={{ duration: 0.3 }}
-            onClick={() => setIndexActivo(index)}
-          >
-            <img
-              src={src}
-              alt={`Servicio ${index + 1}`}
-              className="w-full h-64 object-cover"
-              loading="lazy"
-            />
-          </motion.div>
-        ))}
+        {imagenes.length === 0 ? (
+          <p className="text-center col-span-3 text-gray-400">
+            No se encontraron imágenes en la galería.
+          </p>
+        ) : (
+          imagenes.map((src, index) => (
+            <motion.div
+              key={index}
+              className="rounded overflow-hidden shadow-lg bg-white cursor-pointer"
+              whileHover={{ scale: 1.03 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => setIndexActivo(index)}
+            >
+              <img
+                src={src}
+                alt={`Servicio ${index + 1}`}
+                className="w-full h-64 object-cover"
+                loading="lazy"
+              />
+            </motion.div>
+          ))
+        )}
       </div>
 
       {/* Marcas aliadas */}
@@ -78,24 +89,15 @@ export default function Galeria() {
         🤝 Marcas Aliadas
       </h3>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
-        <motion.img
-          src={marca1}
-          alt="Marca aliada NOT BEER"
-          className="bg-white rounded-lg p-3 object-contain"
-          whileHover={{ scale: 1.05 }}
-        />
-        <motion.img
-          src={marca2}
-          alt="Marca aliada MARMA2"
-          className="bg-white rounded-lg p-3 object-contain"
-          whileHover={{ scale: 1.05 }}
-        />
-        <motion.img
-          src={marca3}
-          alt="Marca aliada Logo 99"
-          className="bg-white rounded-lg p-3 object-contain"
-          whileHover={{ scale: 1.05 }}
-        />
+        {[marca1, marca2, marca3].map((marca, i) => (
+          <motion.img
+            key={i}
+            src={marca}
+            alt={`Marca aliada ${i + 1}`}
+            className="bg-white rounded-lg p-3 object-contain"
+            whileHover={{ scale: 1.05 }}
+          />
+        ))}
       </div>
 
       {/* Modal de imagen ampliada */}

@@ -15,7 +15,7 @@ const Navbar = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [esTransparente, setEsTransparente] = useState(true);
 
-  // Controla transparencia solo en Home (arriba)
+  // Transparencia al hacer scroll solo en home
   useEffect(() => {
     const manejarScroll = () => {
       setEsTransparente(location.pathname === "/" && window.scrollY <= 50);
@@ -25,7 +25,7 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", manejarScroll);
   }, [location.pathname]);
 
-  // Escuchar cambios de sesión
+  // Estado de sesión
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -52,7 +52,6 @@ const Navbar = () => {
     navigate("/");
   };
 
-  // Ítems principales
   const navItems = [
     { path: "/", label: "Inicio" },
     { path: "/galeria", label: "Galería" },
@@ -71,17 +70,21 @@ const Navbar = () => {
       transition={{ duration: 0.4 }}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3 text-white">
-        {/* Logo -> Perfil/Login */}
+        {/* Logo */}
         <button
           onClick={() => navigate("/perfil")}
           className="flex items-center gap-2 hover:scale-105 transition"
           title={usuario ? "Ir a tu perfil" : "Iniciar sesión"}
         >
-          <img src={logo} alt="Logo Lugo Studio" className="w-10 h-10 object-contain" />
+          <img
+            src={logo}
+            alt="Logo Lugo Studio"
+            className="w-10 h-10 object-contain"
+          />
           <span className="font-bold text-lg tracking-wide">Lugo Studio</span>
         </button>
 
-        {/* Botón menú móvil */}
+        {/* Menú móvil */}
         <button
           className="md:hidden text-xl focus:outline-none"
           onClick={() => setMenuAbierto((prev) => !prev)}
@@ -122,7 +125,7 @@ const Navbar = () => {
             </Link>
           )}
 
-          {/* Usuario logueado */}
+          {/* Usuario */}
           {usuario ? (
             <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3">
               <span className="text-xs md:text-sm truncate max-w-[150px] md:max-w-none">
@@ -136,7 +139,6 @@ const Navbar = () => {
               </button>
             </div>
           ) : (
-            // Enlaces cuando NO está logueado
             <div className="flex flex-col md:flex-row gap-2">
               <Link
                 to="/perfil"
