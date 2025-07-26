@@ -9,14 +9,23 @@ import logo from "../assets/galeria/logo.png";
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const isActive = (path) => location.pathname === path;
-
   const [usuario, setUsuario] = useState(null);
   const [nombreUsuario, setNombreUsuario] = useState("");
   const [rolUsuario, setRolUsuario] = useState("");
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [esTransparente, setEsTransparente] = useState(true);
 
-  // Escuchar sesión y cargar datos
+  // Controlar si el navbar es transparente (solo en home y arriba)
+  useEffect(() => {
+    const manejarScroll = () => {
+      setEsTransparente(location.pathname === "/" && window.scrollY <= 50);
+    };
+    manejarScroll();
+    window.addEventListener("scroll", manejarScroll);
+    return () => window.removeEventListener("scroll", manejarScroll);
+  }, [location.pathname]);
+
+  // Escuchar sesión y cargar datos del usuario
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -26,7 +35,7 @@ const Navbar = () => {
         if (snap.exists()) {
           const data = snap.data();
           setNombreUsuario(data.nombre || user.email);
-          setRolUsuario(data.rol);
+          setRolUsuario(data.rol || "");
         }
       } else {
         setUsuario(null);
@@ -43,7 +52,7 @@ const Navbar = () => {
     navigate("/");
   };
 
-  // Items de navegación
+  // Links del navbar
   const navItems = [
     { path: "/", label: "Inicio" },
     { path: "/galeria", label: "Galería" },
@@ -52,26 +61,31 @@ const Navbar = () => {
 
   return (
     <motion.header
-      className="backdrop-blur bg-black/80 text-white fixed top-0 left-0 w-full z-50 shadow-md"
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        esTransparente
+          ? "bg-black/40 backdrop-blur"
+          : "bg-black text-white shadow-md"
+      }`}
       initial={{ y: -50 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3 text-white">
         {/* Logo -> Perfil */}
         <button
           onClick={() => navigate("/perfil")}
           className="flex items-center gap-2 hover:scale-105 transition"
           title="Ir a perfil/login"
         >
-          <img src={logo} alt="Logo" className="w-10 h-10 object-contain" />
+          <img src={logo} alt="Logo Lugo Studio" className="w-10 h-10 object-contain" />
           <span className="font-bold text-lg tracking-wide">Lugo Studio</span>
         </button>
 
         {/* Botón menú móvil */}
         <button
           className="md:hidden text-xl focus:outline-none"
-          onClick={() => setMenuAbierto(!menuAbierto)}
+          onClick={() => setMenuAbierto((prev) => !prev)}
+          aria-label="Abrir menú"
         >
           {menuAbierto ? "✖" : "☰"}
         </button>
@@ -88,27 +102,27 @@ const Navbar = () => {
               to={item.path}
               onClick={() => setMenuAbierto(false)}
               className={`hover:text-purple-400 ${
-                isActive(item.path) ? "text-purple-400" : ""
+                location.pathname === item.path ? "text-purple-400" : ""
               }`}
             >
               {item.label}
             </Link>
           ))}
 
-          {/* Mostrar admin panel solo si tiene rol */}
+          {/* Admin Panel */}
           {usuario && ["god", "admin", "barberyass"].includes(rolUsuario) && (
             <Link
               to="/admin"
               onClick={() => setMenuAbierto(false)}
               className={`hover:text-purple-400 ${
-                isActive("/admin") ? "text-purple-400" : ""
+                location.pathname.startsWith("/admin") ? "text-purple-400" : ""
               }`}
             >
               Admin Panel
             </Link>
           )}
 
-          {/* Info usuario */}
+          {/* Usuario logueado */}
           {usuario && (
             <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3">
               <span className="text-xs md:text-sm truncate max-w-[150px] md:max-w-none">
