@@ -16,12 +16,12 @@ import RecuperarPassword from "./pages/RecuperarPassword";
 import Servicios from "./pages/Servicios";
 
 // 👤 Perfil (login + perfil)
-import Perfil from "./pages/perfil";
+import Perfil from "./pages/perfil"; // ✅ unificado
 import Reservar from "./pages/reservar";
 import Confirmacion from "./pages/confirmacion";
 
 // 🛠️ Panel administrativo
-import AdminPanel from "./pages/adminpanel";
+import AdminPanel from "./pages/adminpanel"; // ✅ panel principal admin
 import AdminGestionUsuarios from "./pages/AdminGestionUsuarios";
 import AdminHorarios from "./pages/AdminHorarios";
 import AdminReservaManual from "./pages/AdminReservaManual";
@@ -44,15 +44,17 @@ function App() {
       {/* 🔓 Rutas públicas */}
       <Route path="/recuperar" element={<RecuperarPassword />} />
 
-      {/* Rutas con Layout (Navbar + Footer) */}
+      {/* Todas las rutas con Layout (Navbar + Footer) */}
       <Route element={<Layout />}>
+        {/* 🌐 Rutas públicas */}
         <Route path="/" element={<Home />} />
         <Route path="/galeria" element={<Galeria />} />
         <Route path="/servicios" element={<Servicios />} />
 
-        {/* Perfil centraliza el login */}
+        {/* 👤 Perfil centraliza el login */}
         <Route path="/perfil" element={<Perfil />} />
 
+        {/* 👤 Rutas protegidas */}
         <Route
           path="/reservar"
           element={
@@ -70,7 +72,7 @@ function App() {
           }
         />
 
-        {/* Panel admin */}
+        {/* 🛠️ Panel administrativo */}
         <Route
           path="/admin"
           element={
@@ -79,6 +81,7 @@ function App() {
             </ProtectedRouteByRol>
           }
         >
+          {/* Página principal del panel admin */}
           <Route index element={<AdminPanel />} />
           <Route path="usuarios" element={<AdminGestionUsuarios />} />
           <Route path="horarios" element={<AdminHorarios />} />

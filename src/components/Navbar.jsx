@@ -14,7 +14,9 @@ const Navbar = () => {
   const [usuario, setUsuario] = useState(null);
   const [nombreUsuario, setNombreUsuario] = useState("");
   const [rolUsuario, setRolUsuario] = useState("");
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
+  // Escuchar sesión y cargar datos
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -35,10 +37,18 @@ const Navbar = () => {
     return () => unsubscribe();
   }, []);
 
+  // Cerrar sesión
   const cerrarSesion = async () => {
     await signOut(auth);
     navigate("/");
   };
+
+  // Items de navegación
+  const navItems = [
+    { path: "/", label: "Inicio" },
+    { path: "/galeria", label: "Galería" },
+    { path: "/reservar", label: "Reservar Cita" },
+  ];
 
   return (
     <motion.header
@@ -58,40 +68,52 @@ const Navbar = () => {
           <span className="font-bold text-lg tracking-wide">Lugo Studio</span>
         </button>
 
+        {/* Botón menú móvil */}
+        <button
+          className="md:hidden text-xl focus:outline-none"
+          onClick={() => setMenuAbierto(!menuAbierto)}
+        >
+          {menuAbierto ? "✖" : "☰"}
+        </button>
+
         {/* Navegación */}
-        <nav className="flex flex-wrap items-center gap-4 text-sm font-medium">
-          <Link
-            to="/"
-            className={`hover:text-purple-400 ${isActive("/") ? "text-purple-400" : ""}`}
-          >
-            Inicio
-          </Link>
-          <Link
-            to="/galeria"
-            className={`hover:text-purple-400 ${isActive("/galeria") ? "text-purple-400" : ""}`}
-          >
-            Galería
-          </Link>
-          <Link
-            to="/reservar"
-            className={`hover:text-purple-400 ${isActive("/reservar") ? "text-purple-400" : ""}`}
-          >
-            Reservar Cita
-          </Link>
+        <nav
+          className={`${
+            menuAbierto ? "flex" : "hidden"
+          } md:flex flex-col md:flex-row md:items-center gap-4 text-sm font-medium absolute md:static top-16 left-0 w-full md:w-auto bg-black md:bg-transparent p-4 md:p-0`}
+        >
+          {navItems.map((item, i) => (
+            <Link
+              key={i}
+              to={item.path}
+              onClick={() => setMenuAbierto(false)}
+              className={`hover:text-purple-400 ${
+                isActive(item.path) ? "text-purple-400" : ""
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
 
           {/* Mostrar admin panel solo si tiene rol */}
           {usuario && ["god", "admin", "barberyass"].includes(rolUsuario) && (
             <Link
-              to="/admin/horarios"
-              className={`hover:text-purple-400 ${isActive("/admin/horarios") ? "text-purple-400" : ""}`}
+              to="/admin"
+              onClick={() => setMenuAbierto(false)}
+              className={`hover:text-purple-400 ${
+                isActive("/admin") ? "text-purple-400" : ""
+              }`}
             >
               Admin Panel
             </Link>
           )}
 
+          {/* Info usuario */}
           {usuario && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm">👤 {nombreUsuario}</span>
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3">
+              <span className="text-xs md:text-sm truncate max-w-[150px] md:max-w-none">
+                👤 {nombreUsuario}
+              </span>
               <button
                 onClick={cerrarSesion}
                 className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white text-xs transition"

@@ -1,4 +1,3 @@
-// src/pages/Perfil.jsx
 import React, { useEffect, useState } from "react";
 import { db, auth } from "../firebase/firebase";
 import {
@@ -8,6 +7,7 @@ import {
   where,
   updateDoc,
   doc,
+  getDoc,
 } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
@@ -22,6 +22,7 @@ export default function Perfil() {
   const [reservas, setReservas] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [mensaje, setMensaje] = useState("");
+  const [fotoPerfil, setFotoPerfil] = useState(""); // 🔹 foto perfil Firestore
   const [stats, setStats] = useState({
     totalReservas: 0,
     reservasActivas: 0,
@@ -38,6 +39,21 @@ export default function Perfil() {
   // Login local
   const [credenciales, setCredenciales] = useState({ email: "", password: "" });
   const [procesando, setProcesando] = useState(false);
+
+  useEffect(() => {
+    const cargarDatosUsuario = async () => {
+      if (usuario) {
+        // 🔹 Traer foto de perfil desde Firestore
+        const ref = doc(db, "usuarios", usuario.uid);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.fotoPerfil) setFotoPerfil(data.fotoPerfil);
+        }
+      }
+    };
+    cargarDatosUsuario();
+  }, [usuario]);
 
   useEffect(() => {
     if (!usuario) return;
@@ -216,7 +232,7 @@ export default function Perfil() {
   // Si está logueado -> Perfil
   return (
     <div className="min-h-screen p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <motion.img src={logo} alt="Logo" className="w-20" initial={{ opacity: 0 }} animate={{ opacity: 1 }} />
         <button
           onClick={cerrarSesion}
@@ -226,14 +242,22 @@ export default function Perfil() {
         </button>
       </div>
 
-      <h2 className="text-2xl font-bold text-center mb-4">👤 Perfil</h2>
-      {mensaje && <p className="text-center mb-3">{mensaje}</p>}
+      <h2 className="text-2xl font-bold text-center mb-4">👤 Mi Perfil</h2>
+      {mensaje && <p className="text-center mb-3 text-green-600">{mensaje}</p>}
 
       {/* Datos usuario */}
-      <div className="max-w-md mx-auto bg-gray-100 p-4 rounded shadow mb-6">
-        <p><strong>Nombre:</strong> {usuario.displayName || "No definido"}</p>
-        <p><strong>Email:</strong> {usuario.email}</p>
-        <p><strong>Rol:</strong> {rol}</p>
+      <div className="max-w-md mx-auto bg-gray-100 p-6 rounded shadow mb-6 text-center">
+        {/* Foto de perfil */}
+        <img
+          src={fotoPerfil || "https://ui-avatars.com/api/?name=" + usuario.email}
+          alt="Foto de perfil"
+          className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-2 border-purple-400"
+        />
+        <p className="text-lg font-semibold">{usuario.displayName || "Usuario"}</p>
+        <p className="text-sm text-gray-700">{usuario.email}</p>
+        <p className="text-sm mt-1">
+          <strong>Rol:</strong> {rol}
+        </p>
       </div>
 
       {/* Pago usuario 👤 */}
@@ -254,7 +278,7 @@ export default function Perfil() {
           <h3 className="text-2xl font-semibold mb-6 text-center">📊 Dashboard BarberYass</h3>
 
           {/* Estadísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
             <div className="bg-blue-100 p-4 rounded shadow text-center">
               <p className="text-3xl font-bold">{stats.totalReservas}</p>
               <p>Total Reservas</p>
@@ -323,7 +347,7 @@ export default function Perfil() {
       )}
 
       {/* Reservas */}
-      <h3 className="text-xl font-semibold mb-3 text-center">📋 Reservas</h3>
+      <h3 className="text-xl font-semibold mb-3 text-center">📋 Mis Reservas</h3>
       <div className="max-w-6xl mx-auto">
         {reservasFiltradas.length === 0 ? (
           <p className="text-center text-gray-600">No se encontraron reservas</p>
