@@ -2,12 +2,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Permitir lectura solo si el usuario está autenticado
+    // Permitir lectura y escritura solo si el usuario está autenticado y es el dueño del documento
     match /usuarios/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Puedes agregar más reglas específicas para otras colecciones si las usas
+    // Permitir lectura y escritura para reservas solo si está autenticado
     match /reservas/{reservaId} {
       allow read, write: if request.auth != null;
     }
