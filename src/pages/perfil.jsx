@@ -14,6 +14,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup
 } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
@@ -189,6 +191,34 @@ export default function Perfil() {
     }
   };
 
+  // Google Sign-In
+  const iniciarConGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Crear registro en Firestore si no existe
+      const ref = doc(db, "usuarios", user.uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        await setDoc(ref, {
+          uid: user.uid,
+          email: user.email,
+          nombre: user.displayName || "Usuario Google",
+          rol: "user",
+          requierePago: false,
+          creado: new Date().toISOString(),
+        });
+      }
+
+      setMensaje("✅ Bienvenido con Google");
+    } catch (error) {
+      console.error("❌ Error Google Sign-In:", error.code);
+      setMensaje("⚠️ No se pudo iniciar sesión con Google");
+    }
+  };
+
   const cerrarSesion = async () => {
     await signOut(auth);
   };
@@ -261,6 +291,16 @@ export default function Perfil() {
             {procesando ? "Conectando..." : "Iniciar sesión"}
           </button>
         </form>
+
+        {/* Botón de Google como segunda opción */}
+        <div className="w-full max-w-sm mt-4">
+          <button
+            onClick={iniciarConGoogle}
+            className="w-full py-2 rounded text-white bg-purple-600 hover:bg-purple-700"
+          >
+            Iniciar sesión con Google
+          </button>
+        </div>
       </div>
     );
   }

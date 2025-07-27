@@ -9,7 +9,8 @@
     "serve": "firebase serve"
   },
   "dependencies": {
-    "firebase": "^11.1.0",
+    "firebase": "^11.10.0",
+    "framer-motion": "^12.23.9",
     "jspdf": "^2.5.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -20,9 +21,9 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.20",
+    "cross-env": "^7.0.3",
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.12",
-    "vite": "^7.0.6",
-    "cross-env": "^7.0.3"
+    "vite": "^7.0.6"
   }
 }
