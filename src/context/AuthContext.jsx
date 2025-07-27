@@ -1,6 +1,6 @@
 // 📁 src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, getIdTokenResult } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../firebase/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
@@ -17,20 +17,11 @@ export const AuthProvider = ({ children }) => {
         setUsuario(user);
 
         try {
-          // Obtener rol desde Firestore
+          // Traer rol desde Firestore
           const ref = doc(db, "usuarios", user.uid);
           const snap = await getDoc(ref);
-
           if (snap.exists()) {
-            const rolFirestore = snap.data().rol || "user";
-            setRol(rolFirestore);
-
-            // Guardar el rol en el token para reglas de Firestore
-            const tokenResult = await getIdTokenResult(user);
-            if (tokenResult.claims.rol !== rolFirestore) {
-              // ⚡ Importante: no se pueden actualizar los claims desde el frontend
-              console.warn("⚠️ El rol no está en los claims. Se usará el de Firestore.");
-            }
+            setRol(snap.data().rol || "user");
           } else {
             setRol("user");
           }
