@@ -61,7 +61,7 @@ const Navbar = () => {
   const navItems = [
     { path: "/", label: "Inicio" },
     { path: "/galeria", label: "Galería" },
-    { path: "/reservar", label: "Reservar Cita" },
+    { path: "/perfil", label: "Reservar Cita" },
   ];
 
   return (
