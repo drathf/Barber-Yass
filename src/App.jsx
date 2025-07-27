@@ -62,7 +62,9 @@ const Layout = () => {
             <p className="text-sm">
               © {new Date().getFullYear()} Lugo Studio | BarberYass
             </p>
-            <p className="text-xs text-gray-400">Todos los derechos reservados.</p>
+            <p className="text-xs text-gray-400">
+              Todos los derechos reservados.
+            </p>
           </div>
           <div className="flex gap-4 items-center">
             <a
@@ -110,7 +112,7 @@ function App() {
         <Route path="/servicios" element={<Servicios />} />
         <Route path="/perfil" element={<Perfil />} />
 
-        {/* Rutas protegidas */}
+        {/* Rutas protegidas para usuarios logueados */}
         <Route
           path="/reservar"
           element={
@@ -128,7 +130,7 @@ function App() {
           }
         />
 
-        {/* Panel admin */}
+        {/* Panel admin → Solo god, admin y barberyass */}
         <Route
           path="/admin"
           element={

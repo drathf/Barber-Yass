@@ -25,7 +25,7 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", manejarScroll);
   }, [location.pathname]);
 
-  // Verificar sesión
+  // Verificar sesión y cargar rol
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -36,7 +36,7 @@ const Navbar = () => {
           if (snap.exists()) {
             const data = snap.data();
             setNombreUsuario(data.nombre || user.email);
-            setRolUsuario(data.rol || "");
+            setRolUsuario(data.rol || "user");
           }
         } catch (error) {
           console.error("Error cargando usuario:", error);
@@ -60,7 +60,10 @@ const Navbar = () => {
   const navItems = [
     { path: "/", label: "Inicio" },
     { path: "/galeria", label: "Galería" },
-    { path: "/reservar", label: "Reservar Cita" },
+    // Restricción: Vip/User pueden ver "Reservar"
+    ...(rolUsuario === "vip" || rolUsuario === "user" || rolUsuario === "god" || rolUsuario === "admin" || rolUsuario === "barberyass"
+      ? [{ path: "/reservar", label: "Reservar Cita" }]
+      : [])
   ];
 
   return (
@@ -114,7 +117,7 @@ const Navbar = () => {
             </Link>
           ))}
 
-          {/* Panel admin */}
+          {/* Panel admin visible solo para god/admin/barberyass */}
           {usuario && ["god", "admin", "barberyass"].includes(rolUsuario) && (
             <Link
               to="/admin"

@@ -1,3 +1,4 @@
+// src/components/ProtectedRouteByRol.jsx
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { auth, db } from "../firebase/firebase";
@@ -16,10 +17,10 @@ const ProtectedRouteByRol = ({ rolesPermitidos }) => {
         try {
           const ref = doc(db, "usuarios", user.uid);
           const snap = await getDoc(ref);
-          setRolUsuario(snap.exists() ? snap.data().rol || "" : "");
+          setRolUsuario(snap.exists() ? snap.data().rol || "user" : "user");
         } catch (error) {
-          console.error("Error obteniendo el rol del usuario:", error);
-          setRolUsuario("");
+          console.error("❌ Error obteniendo el rol del usuario:", error);
+          setRolUsuario("user");
         }
       } else {
         setUsuario(null);
@@ -27,10 +28,11 @@ const ProtectedRouteByRol = ({ rolesPermitidos }) => {
       }
       setCargando(false);
     });
+
     return () => unsubscribe();
   }, []);
 
-  // Loader
+  // Loader mientras verifica
   if (cargando || rolUsuario === null) {
     return (
       <div className="min-h-screen flex justify-center items-center text-lg text-purple-700">
@@ -39,7 +41,7 @@ const ProtectedRouteByRol = ({ rolesPermitidos }) => {
     );
   }
 
-  // Usuario no logueado
+  // Usuario no autenticado
   if (!usuario) {
     return <Navigate to="/" replace />;
   }
@@ -50,7 +52,7 @@ const ProtectedRouteByRol = ({ rolesPermitidos }) => {
       <div className="min-h-screen flex flex-col justify-center items-center text-red-600 text-xl font-semibold">
         <span className="mb-2">🚫 Acceso denegado</span>
         <p className="text-base text-gray-700">
-          No tienes permisos para acceder a esta sección.
+          Tu rol <b>{rolUsuario}</b> no tiene permisos para acceder a esta sección.
         </p>
         <a
           href="/"
