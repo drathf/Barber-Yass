@@ -82,7 +82,7 @@ const RecuperarPassword = () => {
         <p className="text-sm mt-4 text-gray-500">
           ¿Ya recordaste tu contraseña?{" "}
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/perfil")}
             className="text-blue-600 underline"
           >
             Iniciar sesión
