@@ -1,4 +1,3 @@
-// 📁 src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../firebase/firebase";
@@ -12,31 +11,19 @@ export const AuthProvider = ({ children }) => {
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUsuario(user);
-
-        try {
-          // Traer rol desde Firestore
-          const ref = doc(db, "usuarios", user.uid);
-          const snap = await getDoc(ref);
-          if (snap.exists()) {
-            setRol(snap.data().rol || "user");
-          } else {
-            setRol("user");
-          }
-        } catch (error) {
-          console.error("❌ Error obteniendo el rol:", error);
-          setRol("user");
-        }
+        const ref = doc(db, "usuarios", user.uid);
+        const snap = await getDoc(ref);
+        setRol(snap.exists() ? snap.data().rol : "user");
       } else {
         setUsuario(null);
         setRol("");
       }
       setCargando(false);
     });
-
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
   return (

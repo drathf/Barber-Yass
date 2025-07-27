@@ -2,31 +2,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Colección de usuarios
+    // 🔹 Usuarios: el usuario solo puede leer y editar su propio documento
+    // Rol god puede leer/escribir todo
     match /usuarios/{userId} {
-      allow read, write: if 
-        // god tiene acceso a todo
-        (request.auth.token.rol == 'god') ||
-        // admin/barberyass pueden leer y escribir, pero no modificar usuarios god
-        (request.auth.token.rol in ['admin', 'barberyass'] &&
-          !(resource.data.rol == 'god' || request.resource.data.rol == 'god')) ||
-        // un usuario normal solo puede leer y escribir su propio documento
-        (request.auth != null && request.auth.uid == userId);
-    }
-
-    // Colección de reservas
-    match /reservas/{reservaId} {
       allow read, write: if
-        // god/admin/barberyass tienen acceso completo
-        (request.auth.token.rol in ['god', 'admin', 'barberyass']) ||
-        // user/vip solo pueden leer y escribir sus propias reservas
-        (request.auth != null && request.auth.uid == request.resource.data.uid);
+        request.auth != null &&
+        (request.auth.uid == userId || get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'god');
     }
 
-    // Servicios
-    match /servicios/{servicioId} {
-      allow read: if request.auth != null; // todos los roles autenticados pueden leer
-      allow write: if request.auth.token.rol in ['god', 'admin', 'barberyass'];
+    // 🔹 Reservas: solo usuarios logueados pueden leer y escribir
+    // god/admin/barberyass pueden gestionar todo
+    match /reservas/{reservaId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // 🔹 Horarios: tiempo real solo si logueado
+    match /horarios/{horarioId} {
+      allow read, write: if request.auth != null;
     }
 
     // Denegar todo lo demás

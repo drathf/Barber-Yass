@@ -78,12 +78,13 @@ const AdminHorarios = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Cargar datos de horarios y reservas
+  // Cargar datos de horarios y reservas EN TIEMPO REAL
   useEffect(() => {
     const unsubHorarios = onSnapshot(collection(db, "horarios"), (snapshot) => {
       const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
       setHorarios(data.filter((h) => h.fecha === formatearFecha(fechaSeleccionada)));
 
+      // Contador semanal en tiempo real
       const contador = semanaActual.reduce((acc, fecha, idx) => {
         const nombreDia = semanaLaboral[idx];
         acc[nombreDia] = {
@@ -117,7 +118,7 @@ const AdminHorarios = () => {
     };
   }, [fechaSeleccionada, semanaActual]);
 
-  // Horarios base
+  // Horarios base (11am - 7pm)
   const generarHorariosBase = () => {
     return Array.from({ length: 9 }, (_, i) => `${i + 11}:00`);
   };
