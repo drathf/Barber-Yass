@@ -68,7 +68,7 @@ export default function Home() {
           </motion.p>
 
           <Link
-            to="/reservar"
+            to="/perfil"
             className="bg-purple-600 hover:bg-purple-700 px-8 py-3 rounded-full text-white font-semibold mb-12 shadow-lg transition-transform hover:scale-105"
           >
             Reservar Cita
