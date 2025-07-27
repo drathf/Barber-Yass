@@ -1,11 +1,11 @@
-// src/components/ProtectedRoute.jsx
+// 📁 src/components/ProtectedRoute.jsx
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 /**
- * Protege rutas para usuarios autenticados.
- * Redirige al Home si no hay sesión activa.
+ * Protege rutas para usuarios autenticados
+ * Redirige a /perfil si no hay sesión activa
  */
 const ProtectedRoute = ({ children }) => {
   const { usuario, cargando } = useAuth();
@@ -13,13 +13,13 @@ const ProtectedRoute = ({ children }) => {
   if (cargando) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
-        ⏳ Cargando...
+        Cargando...
       </div>
     );
   }
 
   if (!usuario) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/perfil" />;
   }
 
   return children;

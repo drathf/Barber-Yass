@@ -1,3 +1,4 @@
+// 📁 src/components/Navbar.jsx
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -25,7 +26,7 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", manejarScroll);
   }, [location.pathname]);
 
-  // Verificar sesión y cargar rol
+  // Verificar sesión
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -36,7 +37,7 @@ const Navbar = () => {
           if (snap.exists()) {
             const data = snap.data();
             setNombreUsuario(data.nombre || user.email);
-            setRolUsuario(data.rol || "user");
+            setRolUsuario(data.rol || "");
           }
         } catch (error) {
           console.error("Error cargando usuario:", error);
@@ -60,10 +61,7 @@ const Navbar = () => {
   const navItems = [
     { path: "/", label: "Inicio" },
     { path: "/galeria", label: "Galería" },
-    // Restricción: Vip/User pueden ver "Reservar"
-    ...(rolUsuario === "vip" || rolUsuario === "user" || rolUsuario === "god" || rolUsuario === "admin" || rolUsuario === "barberyass"
-      ? [{ path: "/reservar", label: "Reservar Cita" }]
-      : [])
+    { path: "/reservar", label: "Reservar Cita" },
   ];
 
   return (
@@ -78,8 +76,7 @@ const Navbar = () => {
       transition={{ duration: 0.4 }}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3 text-white">
-        
-        {/* Logo → perfil/login */}
+        {/* Logo → Perfil */}
         <button
           onClick={() => navigate("/perfil")}
           className="flex items-center gap-2 hover:scale-105 transition"
@@ -117,7 +114,7 @@ const Navbar = () => {
             </Link>
           ))}
 
-          {/* Panel admin visible solo para god/admin/barberyass */}
+          {/* Panel admin solo roles válidos */}
           {usuario && ["god", "admin", "barberyass"].includes(rolUsuario) && (
             <Link
               to="/admin"
@@ -130,7 +127,7 @@ const Navbar = () => {
             </Link>
           )}
 
-          {/* Usuario con opción cerrar sesión */}
+          {/* Usuario conectado */}
           {usuario && (
             <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3">
               <span className="text-xs md:text-sm truncate max-w-[150px] md:max-w-none">
